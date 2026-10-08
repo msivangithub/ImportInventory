@@ -1,0 +1,35 @@
+{
+  "summary": "Full wizard UI test for RetailCLIQ Import Wizard. All 11 test items validated. Found and fixed 1 critical bug: stale doNext closure preventing Step1→Step2 navigation after GL account selection.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Step1 → Step2 navigation via Continue button",
+        "issue": "FIXED: Purchase Account (GL) selection via GlAccountSearch combobox did not persist in doNext handler due to stale closure. useEffect registering setNextHandler had deps [srcReady, creating, ws.file, ws.rows.length] but not doNext. After GL selection cfg.purchaseAccount changed, doNext was recreated, but setNextHandler wasn't re-called with the new handler. Fix: added doNextRef.current pattern so registered handler always calls latest doNext.",
+        "affected_selectors": ["[data-testid='gl-account-search-trigger']", "[data-testid='wizard-next-btn']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/frontend/src/components/wizard/Step1Source.jsx"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Bug fixed: Step1Source.jsx useEffect for setNextHandler now uses doNextRef.current pattern to avoid stale closure — the doNextRef is always updated to the latest doNext on every render, so the registered handler always has access to the current cfg.purchaseAccount value.",
+    "Note: ExpiryDate and TransDate columns detected as 'integer' (likely date columns stored as HBS/DMY) — no bug, by design"
+  ],
+  "updated_files": ["/app/frontend/src/components/wizard/Step1Source.jsx"],
+  "success_rate": {
+    "backend": "N/A (frontend-only test)",
+    "frontend": "100% — all 11 test items pass after fix"
+  },
+  "test_credentials": "msnarayana@retailcliq.com / RetailCLIQ@2026",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All wizard Step1 UI elements confirmed working: 4 header dropdowns (Import type=Opening Stock with Supplier, Branch=ONG-CENTRAL [BMS10004], Region=India en-IN, Language=English), 9-step stepper (Source/Preview/Mapping/Suppliers/Master mapping/Validation/Confirm/Import/Result), 5 source cards, drop zone with Drop your file here/Choose file/Load sample file, parse options (Delimiter/Encoding/Source date format/Source number format), Target database (Fresh/Running), Globalization section, MSSQL pill=MSSQL·RC26MASTERDB. Step1→Step2 navigation works after loading sample (18 rows) and selecting GL account. Step2 shows 4 tiles (file name, 23 columns, 18 records, data types), column detection table with correct headers.",
+  "rca_of_issue": "Root cause: In Step1Source.jsx, doNext is defined via useCallback([ws, cfg, patch, goNext]) so it recreates when cfg changes. But the useEffect calling setNextHandler(doNext) had deps [srcReady, creating, ws.file, ws.rows.length] — not including doNext. So when a user selected a GL account (updating cfg.purchaseAccount), doNext was recreated with the new cfg, but setNextHandler was NOT called again. WizardContext's nextHandlerRef.current still pointed to the old doNext (with empty purchaseAccount). Fix: replaced setNextHandler(doNext) with setNextHandler(() => doNextRef.current()), where doNextRef.current = doNext is updated on every render. This breaks the closure dependency without causing infinite loops."
+}

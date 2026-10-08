@@ -1,0 +1,1665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RetailCLIQ Universal Import</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed header + stepper rail, scrolling step panel, sticky action bar. Desktop = horizontal stepper; phone = compact progress strip. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#e9edf1; --line:#d3dae1; --line-strong:#aab5c0;
+  --fg:#15202b; --fg-2:#4b5a68; --fg-3:#7b8894;
+  --accent:#0f6e74; --accent-fg:#ffffff; --accent-soft:#dcf1f1;
+  --ok:#1f7a3c; --ok-soft:#dff3e5; --warn:#a4620a; --warn-soft:#fbeed3; --err:#b42323; --err-soft:#fbe1e1; --info:#2457a8; --info-soft:#e0eafb;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --radius:6px; --shadow:0 1px 2px rgba(21,32,43,.06),0 4px 14px rgba(21,32,43,.06);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#171f27; --surface-2:#1f2932; --line:#2c3842; --line-strong:#44535f;
+  --fg:#e7ecf0; --fg-2:#aeb9c3; --fg-3:#7f8b96;
+  --accent:#3fb3b8; --accent-fg:#06282a; --accent-soft:#163c3e;
+  --ok:#5ccb7f; --ok-soft:#153522; --warn:#e9a84a; --warn-soft:#3c2a10; --err:#f07070; --err-soft:#3f1a1a; --info:#7fa6ea; --info-soft:#1a2a45;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#171f27; --surface-2:#1f2932; --line:#2c3842; --line-strong:#44535f;
+  --fg:#e7ecf0; --fg-2:#aeb9c3; --fg-3:#7f8b96;
+  --accent:#3fb3b8; --accent-fg:#06282a; --accent-soft:#163c3e;
+  --ok:#5ccb7f; --ok-soft:#153522; --warn:#e9a84a; --warn-soft:#3c2a10; --err:#f07070; --err-soft:#3f1a1a; --info:#7fa6ea; --info-soft:#1a2a45;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35); color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-body);display:flex;flex-direction:column;min-height:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.25}
+h2{font-size:18px;font-weight:600}
+h3{font-size:14px;font-weight:600}
+p{margin:0}
+.muted{color:var(--fg-2)}
+.small{font-size:12px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Header */
+.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.top-in{max-width:1280px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:7px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.brand h1{font-size:15px;font-weight:600;white-space:nowrap}
+.brand .sub{font-size:11px;color:var(--fg-3)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12px;font-weight:500;color:var(--fg-2)}
+select,input[type=text],input[type=number],input[type=date],input[type=password],textarea{
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:7px 9px;min-height:36px;width:100%;max-width:100%}
+select{padding-right:28px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--fg-3) 50%),linear-gradient(135deg,var(--fg-3) 50%,transparent 50%);background-position:calc(100% - 14px) 15px,calc(100% - 9px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+textarea{font-family:var(--font-mono);font-size:12px;resize:vertical}
+
+/* Stepper */
+.stepper{background:var(--surface);border-bottom:1px solid var(--line)}
+.stepper-in{max-width:1280px;margin:0 auto;padding:10px 16px}
+.steps{display:flex;list-style:none;margin:0;padding:0;gap:0}
+.steps li{flex:1 1 0;display:flex;align-items:center;gap:8px;min-width:0;position:relative;padding:4px 0}
+.steps li::after{content:"";flex:1;height:2px;background:var(--line);margin:0 8px;border-radius:1px}
+.steps li:last-child{flex:0 0 auto}
+.steps li:last-child::after{display:none}
+.steps li.done::after{background:var(--accent)}
+.step-btn{display:flex;align-items:center;gap:8px;background:none;border:0;padding:2px 4px;border-radius:var(--radius);color:var(--fg-2);min-width:0;text-align:left}
+.step-btn[disabled]{cursor:not-allowed;opacity:.7}
+.dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;font-size:12px;font-weight:600;flex:none;background:var(--surface);font-variant-numeric:tabular-nums}
+li.current .dot{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
+li.done .dot{border-color:var(--accent);color:var(--accent)}
+li.current .step-btn{color:var(--fg);font-weight:600}
+.step-lab{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step-compact{display:none;align-items:center;gap:12px}
+.step-compact .bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.step-compact .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.step-compact .lab{font-weight:600;white-space:nowrap}
+@media (max-width:900px){.step-lab{display:none}.steps li{gap:0}}
+@media (max-width:560px){.steps{display:none}.step-compact{display:flex}}
+
+/* Main */
+main{flex:1;width:100%;max-width:1280px;margin:0 auto;padding:18px 16px 110px}
+.panel{display:none}
+.panel.active{display:block;animation:fade .2s ease-out}
+@keyframes fade{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.panel.active{animation:none}.step-compact .bar i{transition:none}}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.panel-head p{max-width:65ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--radius);padding:8px 14px;min-height:38px;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{border-color:var(--err);color:var(--err)}
+.btn.ghost{border-color:transparent}
+.btn[disabled]{opacity:.5;cursor:not-allowed;filter:none}
+.btn.sm{padding:5px 10px;min-height:30px;font-size:12px}
+
+/* Source cards */
+.src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.src{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--surface);text-align:left;display:flex;flex-direction:column;gap:6px;min-height:118px}
+.src:hover{border-color:var(--line-strong)}
+.src.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.src .ic{width:34px;height:34px;border-radius:7px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent)}
+.src.sel .ic{background:var(--accent-soft)}
+.src b{font-size:14px}
+.drop{border:2px dashed var(--line-strong);border-radius:8px;padding:28px 16px;text-align:center;background:var(--surface);display:flex;flex-direction:column;gap:8px;align-items:center}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.filechip{display:inline-flex;gap:8px;align-items:center;background:var(--surface-2);border-radius:var(--radius);padding:6px 10px;max-width:100%}
+.filechip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Tiles */
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;border-left-width:4px}
+.tile .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .l{font-size:12px;color:var(--fg-2)}
+.tile.ok{border-left-color:var(--ok)}.tile.warn{border-left-color:var(--warn)}.tile.err{border-left-color:var(--err)}.tile.info{border-left-color:var(--info)}.tile.acc{border-left-color:var(--accent)}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);max-width:100%}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;white-space:nowrap}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);background:var(--surface-2);position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+tr.r-err td:first-child{box-shadow:inset 3px 0 var(--err)}
+tr.r-warn td:first-child{box-shadow:inset 3px 0 var(--warn)}
+tr.r-ok td:first-child{box-shadow:inset 3px 0 var(--ok)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.err{background:var(--err-soft);color:var(--err)}.pill.info{background:var(--info-soft);color:var(--info)}.pill.n{background:var(--surface-2);color:var(--fg-2)}
+.type-tag{font-family:var(--font-mono);font-size:11px;color:var(--fg-3)}
+
+/* Mapping */
+.map-row{display:grid;grid-template-columns:minmax(0,1.2fr) 28px minmax(0,1.4fr) minmax(0,.9fr);gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.map-row:last-child{border-bottom:0}
+.map-head{background:var(--surface-2);border-radius:8px 8px 0 0}
+.map-head div{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.map-list{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.arrow{color:var(--fg-3);text-align:center}
+.src-col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.src-col b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-row>*{min-width:0}.map-layout>*{min-width:0}
+.src-col .samp{font-family:var(--font-mono);font-size:11px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){
+  .map-head{display:none}
+  .map-row{grid-template-columns:1fr;gap:6px;padding:12px}
+  .arrow{display:none}
+}
+.req{color:var(--err);font-weight:600}
+.map-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media (max-width:1000px){.map-layout{grid-template-columns:1fr}}
+.schema{display:flex;flex-direction:column;gap:10px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 120px);max-height:calc(100vh - 230px)}
+@media (max-width:1000px){.schema{position:static;max-height:none}}
+.schema-tree{overflow:auto;min-height:0;flex:1;border:1px solid var(--line);border-radius:6px;font-size:12px}
+.st-group{border-bottom:1px solid var(--line)}
+.st-group:last-child{border-bottom:0}
+.st-head{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);cursor:pointer;user-select:none}
+.st-head b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-head .kind{font-family:var(--font-mono);font-size:10px;padding:1px 6px;border-radius:4px;background:var(--surface);color:var(--fg-2);border:1px solid var(--line)}
+.st-head .kind.view{color:var(--info)}.st-head .kind.proc{color:var(--warn)}.st-head .kind.staging{color:var(--accent)}
+.st-head .car{color:var(--fg-3);transition:transform .15s}
+.st-group.open .st-head .car{transform:rotate(90deg)}
+.st-body{display:none}
+.st-group.open .st-body{display:block}
+.st-dep{padding:6px 10px 6px 28px;color:var(--fg-2);font-size:11px;border-bottom:1px dashed var(--line);display:flex;flex-direction:column;gap:3px}
+.st-dep code{font-family:var(--font-mono);font-size:10.5px;color:var(--fg-3);white-space:pre-wrap;word-break:break-all}
+.st-col{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 28px;border-bottom:1px solid var(--line);cursor:pointer}
+.st-col:last-child{border-bottom:0}
+.st-col:hover{background:var(--accent-soft)}
+.st-col .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono)}
+.st-col .ty{font-family:var(--font-mono);font-size:10.5px;color:var(--fg-3);white-space:nowrap}
+.st-col .fk{font-size:10px;color:var(--info);white-space:nowrap}
+.st-col.mapped .nm{color:var(--accent);font-weight:600}
+.st-col.inferred .nm{opacity:.7}
+.st-col .dotm{width:7px;height:7px;border-radius:50%;background:var(--line-strong);flex:none}
+.st-col.mapped .dotm{background:var(--accent)}
+.st-col.req .dotm{box-shadow:0 0 0 2px var(--err-soft)}
+.map-row.hl{background:var(--accent-soft)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:500}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+
+/* Master mapping */
+.m-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:12px}
+.m-tab{border:0;background:none;padding:6px 10px;border-radius:var(--radius);display:inline-flex;gap:6px;align-items:center;color:var(--fg-2);font-weight:500}
+.m-tab.on{background:var(--accent-soft);color:var(--accent)}
+.m-tab .cnt{font-size:11px;background:var(--surface-2);border-radius:999px;padding:1px 7px;color:var(--fg-2);font-variant-numeric:tabular-nums}
+.m-tab.on .cnt{background:var(--surface)}
+.mm-row{display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1.3fr) auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.mm-row:last-child{border-bottom:0}
+.mm-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.mm-row.u{box-shadow:inset 3px 0 var(--err)}.mm-row.e{box-shadow:inset 3px 0 var(--ok)}.mm-row.n{box-shadow:inset 3px 0 var(--info)}.mm-row.s{box-shadow:inset 3px 0 var(--warn)}
+.bulk-bar{background:var(--surface-2);border-radius:6px;padding:8px 10px}
+@media (max-width:640px){.mm-row{grid-template-columns:24px 1fr;gap:6px}.mm-row>:nth-child(3),.mm-row>:nth-child(4){grid-column:2}}
+
+/* Progress */
+.prog{height:14px;background:var(--surface-2);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.prog.paused i{background:var(--warn)}
+.prog.done i{background:var(--ok)}
+.log{font-family:var(--font-mono);font-size:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;height:200px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.log .e{color:var(--err)}.log .w{color:var(--warn)}.log .s{color:var(--ok)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px}
+.kv dt{color:var(--fg-2)}.kv dd{margin:0;min-width:0;word-break:break-word}
+.alert{border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;border:1px solid}
+.alert.info{background:var(--info-soft);border-color:transparent;color:var(--fg)}
+.alert.warn{background:var(--warn-soft);border-color:transparent}
+.alert.err{background:var(--err-soft);border-color:transparent}
+.alert.ok{background:var(--ok-soft);border-color:transparent}
+.check{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:var(--radius);font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+
+/* RTL (Arabic) */
+[dir=rtl] select{background-position:14px 15px,9px 15px;padding-right:9px;padding-left:28px}
+[dir=rtl] .tile{border-left-width:1px;border-right-width:4px}
+[dir=rtl] .tile.ok{border-right-color:var(--ok)}[dir=rtl] .tile.warn{border-right-color:var(--warn)}[dir=rtl] .tile.err{border-right-color:var(--err)}[dir=rtl] .tile.info{border-right-color:var(--info)}[dir=rtl] .tile.acc{border-right-color:var(--accent)}
+[dir=rtl] th,[dir=rtl] td{text-align:right}
+[dir=rtl] .top-right{margin-left:0;margin-right:auto}
+
+/* Action bar */
+.actions{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:20}
+.actions-in{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.actions .status{flex:1;min-width:0;font-size:12px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:480px){.actions .status{display:none}.actions-in{justify-content:space-between}.actions .btn{flex:1;justify-content:center}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="logo">RC</div>
+      <div><h1>RetailCLIQ Universal Import</h1><div class="sub">One wizard for every master and transaction import · <span class="pill n" id="apiPill" style="font-size:10px">offline demo</span></div></div>
+    </div>
+    <div class="top-right">
+      <div class="field">
+        <label for="importType" data-i18n="importType">Import type</label>
+        <select id="importType"></select>
+      </div>
+      <div class="field">
+        <label for="branchCtx" data-i18n="branch">Branch context</label>
+        <select id="branchCtx"></select>
+      </div>
+      <div class="field">
+        <label for="regionSel" data-i18n="region">Region / formats</label>
+        <select id="regionSel"></select>
+      </div>
+      <div class="field">
+        <label for="langSel" data-i18n="language">Language</label>
+        <select id="langSel"></select>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="stepper" aria-label="Import steps">
+  <div class="stepper-in">
+    <ol class="steps" id="steps"></ol>
+    <div class="step-compact" id="stepCompact">
+      <span class="lab" id="scLab">Step 1 of 8</span>
+      <div class="bar"><i id="scBar"></i></div>
+      <span class="small muted" id="scName">Source</span>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- STEP 1 SOURCE -->
+  <section class="panel" data-step="1">
+    <div class="panel-head"><div><h2>Where is the data coming from?</h2><p class="muted">Pick a source. For files, drop a CSV or Excel export. The same mapping and validation steps apply to every source.</p></div></div>
+    <div class="stack">
+      <div class="src-grid" id="srcGrid"></div>
+      <div id="srcFile" class="card stack">
+        <div class="drop" id="drop">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0-4 4m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <b>Drop your file here</b>
+          <span class="muted small">CSV, TSV, TXT or Excel (.xlsx exported as CSV). Max 50 MB. First row must be the header.</span>
+          <div class="row">
+            <label class="btn primary" for="fileInput">Choose file</label>
+            <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.xlsx,.xls" hidden>
+            <button class="btn" id="loadSample" type="button">Load sample file</button>
+          </div>
+          <div id="fileChip" hidden></div>
+        </div>
+        <div class="grid g4">
+          <div class="field"><label for="delim" data-i18n="delimiter">Delimiter</label><select id="delim"><option value="auto">Auto-detect</option><option value=",">Comma ( , )</option><option value=";">Semicolon ( ; )</option><option value="	">Tab</option><option value="|">Pipe ( | )</option></select></div>
+          <div class="field"><label for="encoding" data-i18n="encoding">Encoding</label><select id="encoding"><option>UTF-8</option><option>Windows-1252</option><option>ISO-8859-1</option><option>UTF-16</option></select></div>
+          <div class="field"><label for="srcDateFmt" data-i18n="srcDateFmt">Source date format</label><select id="srcDateFmt"><option value="auto">Auto (from region)</option><option value="DMY">DD/MM/YYYY</option><option value="MDY">MM/DD/YYYY</option><option value="YMD">YYYY-MM-DD</option><option value="DMMMY">DD-Mon-YYYY</option><option value="HBS">HBS integer</option><option value="EXCEL">Excel serial</option></select></div>
+          <div class="field"><label for="srcNumFmt" data-i18n="srcNumFmt">Source number format</label><select id="srcNumFmt"><option value="auto">Auto (from region)</option><option value="dot">1,234.56</option><option value="comma">1.234,56</option><option value="space">1 234,56</option><option value="indian">12,34,567.89</option></select></div>
+        </div>
+      </div>
+      <div id="srcRc" class="card stack" hidden>
+        <h3>RetailCLIQ → RetailCLIQ</h3>
+        <p class="small muted">Pull opening stock straight from a running RetailCLIQ database (via <span class="mono">Itemproperties</span> + <span class="mono">Price_Master</span> + <span class="mono">Tax_Master</span>, the same query the Apparels migration uses) and move it into this database. Masters travel with it.</p>
+        <div class="grid g4">
+          <div class="field"><label for="rcHost">Source server</label><input type="text" id="rcHost" placeholder="192.168.1.20,1433"></div>
+          <div class="field"><label for="rcDb">Source database</label><input type="text" id="rcDb" placeholder="RC25ERP_LIVE"></div>
+          <div class="field"><label for="rcComp">Source CompId</label><input type="text" id="rcComp" value="C001"></div>
+          <div class="field"><label for="rcBranch">Source branch</label><input type="text" id="rcBranch" placeholder="BMS10001 (blank = all)"></div>
+        </div>
+        <div class="grid g4">
+          <div class="field"><label for="rcAsOn">Stock as on</label><input type="date" id="rcAsOn"></div>
+          <div class="field"><label for="rcStatus">Item status</label><select id="rcStatus"><option value="A">Active only (status='A')</option><option value="">All</option></select></div>
+          <div class="field"><label for="rcZero">Zero-quantity items</label><select id="rcZero"><option value="skip">Skip (CurQty = 0)</option><option value="include">Include as masters only</option></select></div>
+          <div class="field"><label for="rcCopyMasters">Master tables</label><select id="rcCopyMasters"><option value="copy">Copy as-is (same ids) — fresh DB</option><option value="map">Map by name into existing masters</option></select></div>
+        </div>
+        <details><summary class="small muted" style="cursor:pointer">Extraction query (read-only on the source)</summary><pre class="log" id="rcQuery" style="height:auto;max-height:220px"></pre></details>
+        <div class="row"><button class="btn primary" id="rcFetch" type="button">Connect &amp; fetch</button><span class="small muted" id="rcMsg">Not connected</span></div>
+      </div>
+      <div class="card stack" id="dbModeCard">
+        <div class="row" style="justify-content:space-between"><div><h3>Target database</h3><p class="small muted">Decides the default decision for every master value that is not found.</p></div><span class="pill info" id="dbModePill"></span></div>
+        <div class="src-grid">
+          <button type="button" class="src" data-dbmode="fresh"><span class="ic">✦</span><b>Fresh / empty database</b><span class="small muted">New implementation. Masters do not exist yet, so every master value defaults to <b>Create new</b> — except suppliers, which come from the Suppliers step.</span></button>
+          <button type="button" class="src" data-dbmode="running"><span class="ic">▣</span><b>Running database</b><span class="small muted">Itemmaster and masters already hold data; this stock is added to them. Values default to <b>Existing</b> (matched by name / alias); unmatched ones wait for your decision.</span></button>
+        </div>
+      </div>
+      <div class="card stack" id="globCard">
+        <div class="row" style="justify-content:space-between"><h3 data-i18n="globTitle">Globalization &amp; date storage</h3><span class="pill info" id="globPill"></span></div>
+        <div class="grid g2">
+          <dl class="kv" id="globKv"></dl>
+          <div class="stack">
+            <div class="eyebrow">HBS date (how RetailCLIQ stores dates)</div>
+            <p class="small muted">Every date column is converted to the HBS integer used in the DB: <span class="mono">(year − 1950) × 416 + month × 32 + day</span>. Sources that already contain HBS integers are detected and decoded, so re-importing from an older RetailCLIQ database needs no change.</p>
+            <div class="row"><input type="date" id="hbsTry" style="max-width:190px" aria-label="Try a date"><span class="mono" id="hbsOut"></span></div>
+          </div>
+        </div>
+      </div>
+      <div id="srcApi" class="card stack" hidden>
+        <h3>API connection</h3>
+        <div class="grid g2">
+          <div class="field"><label for="apiUrl">Endpoint URL</label><input type="text" id="apiUrl" placeholder="https://erp.example.com/api/v1/items"></div>
+          <div class="field"><label for="apiAuth">Authentication</label><select id="apiAuth"><option>Bearer token</option><option>API key header</option><option>Basic auth</option></select></div>
+          <div class="field"><label for="apiToken">Token / key</label><input type="password" id="apiToken" placeholder="••••••••"></div>
+          <div class="field"><label for="apiPath">Records path (JSON)</label><input type="text" id="apiPath" value="$.data[*]"></div>
+        </div>
+        <div class="row"><button class="btn" id="apiTest" type="button">Test connection</button><span class="small muted" id="apiMsg">Not tested</span></div>
+      </div>
+      <div id="srcDb" class="card stack" hidden>
+        <h3>Database connection</h3>
+        <div class="grid g2">
+          <div class="field"><label for="dbType">Database</label><select id="dbType"><option>MS SQL Server</option><option>MySQL</option><option>PostgreSQL</option><option>Oracle</option></select></div>
+          <div class="field"><label for="dbHost">Server / host</label><input type="text" id="dbHost" placeholder="192.168.1.20,1433"></div>
+          <div class="field"><label for="dbName">Database name</label><input type="text" id="dbName" placeholder="OLD_ERP"></div>
+          <div class="field"><label for="dbUser">User</label><input type="text" id="dbUser" placeholder="sa"></div>
+        </div>
+        <div class="field"><label for="dbQuery">Query</label><textarea id="dbQuery" rows="3">SELECT ItemCode, ItemName, Qty, Rate, Branch FROM OpeningStock WHERE FY='2026-27'</textarea></div>
+        <div class="row"><button class="btn" id="dbTest" type="button">Test &amp; fetch preview</button><span class="small muted" id="dbMsg">Not tested</span></div>
+      </div>
+      <div id="srcLegacy" class="card stack" hidden>
+        <h3>Previous ERP export</h3>
+        <p class="muted small">Choose the legacy system. Its known column names are pre-mapped so you skip most of manual mapping.</p>
+        <div class="grid g2">
+          <div class="field"><label for="legacySys">Legacy system</label><select id="legacySys"><option>Tally Prime</option><option>Marg ERP</option><option>Busy</option><option>Wondersoft Shoper</option><option>GoFrugal</option><option>Logic ERP</option><option>Other / generic</option></select></div>
+          <div class="field"><label for="legacyFile">Export file</label><input type="file" id="legacyFile" accept=".csv,.tsv,.txt,.xlsx,.xls,.xml"></div>
+        </div>
+        <button class="btn" id="legacySample" type="button">Use sample Tally Prime export</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 PREVIEW -->
+  <section class="panel" data-step="2">
+    <div class="panel-head"><div><h2>Preview</h2><p class="muted">Check that columns and data types were read correctly before mapping.</p></div><div class="row"><label class="check small"><input type="checkbox" id="firstRowHeader" checked> First row is header</label></div></div>
+    <div class="stack">
+      <div class="grid g4" id="previewTiles"></div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Column detection</h3><span class="small muted" id="colCount"></span></div>
+        <div class="tbl-wrap"><table id="colTable"><thead><tr><th>#</th><th>Source column</th><th>Detected type</th><th>Filled</th><th>Distinct</th><th>Sample values</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Sample rows</h3><span class="small muted">First 10 of <b id="sampleTotal" class="mono"></b></span></div>
+        <div class="tbl-wrap"><table id="sampleTable"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 FIELD MAPPING -->
+  <section class="panel" data-step="3">
+    <div class="panel-head"><div><h2>Field mapping</h2><p class="muted">Match each source column to a RetailCLIQ field. Required fields are marked <span class="req">*</span>.</p></div>
+      <div class="row">
+        <button class="btn" id="autoMap" type="button">Auto map</button>
+        <select id="tplSelect" aria-label="Mapping template" style="width:auto;min-width:180px"><option value="">Load template…</option></select>
+        <button class="btn" id="saveTpl" type="button">Save as template</button>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="row" id="mapSummary"></div>
+      <div class="map-layout">
+        <div class="stack" style="min-width:0">
+          <div class="map-list">
+            <div class="map-row map-head"><div>Source column</div><div></div><div>RetailCLIQ target column</div><div>Transform</div></div>
+            <div id="mapRows"></div>
+          </div>
+          <div class="card stack" id="defaultsCard">
+            <div class="row" style="justify-content:space-between">
+              <div><h3>Columns not in your file</h3><p class="small muted">Target columns with no source column. Required ones must get a default rule; optional ones go in as blank ('') unless you set a rule.</p></div>
+              <div class="row"><button class="btn sm" id="applyStdDefaults" type="button">Apply standard defaults</button><label class="check small"><input type="checkbox" id="showOptional"> Show optional columns</label></div>
+            </div>
+            <div class="chips" id="unmappedReq"></div>
+            <div class="map-list"><div class="map-row map-head def-head"><div>Target column</div><div></div><div>Rule</div><div>Value / preview</div></div><div id="defRows"></div></div>
+          </div>
+          <div class="card stack" id="artCard">
+            <div class="row" style="justify-content:space-between">
+              <div><h3>Article name builder</h3><p class="small muted">Compose <span class="mono">ItemDescription</span> / <span class="mono">ArtName</span> from the item's properties, in the order this customer wants. Tokens resolve from mapped or defaulted columns.</p></div>
+              <div class="chips" id="artPresets"></div>
+            </div>
+            <div class="grid g2">
+              <div class="stack">
+                <div class="field"><label for="artTpl">Pattern</label><input type="text" id="artTpl" placeholder="{Brand} {Category} {Style} {Color} {Size}"></div>
+                <div class="chips" id="artTokens"></div>
+                <div class="row">
+                  <div class="field" style="flex:1;min-width:120px"><label for="artCase">Case</label><select id="artCase"><option value="upper">UPPERCASE</option><option value="title">Title Case</option><option value="asis">As is</option></select></div>
+                  <div class="field" style="flex:1;min-width:120px"><label for="artSep">Separator</label><select id="artSep"><option value=" ">Space</option><option value=" - ">Hyphen ( - )</option><option value=" / ">Slash ( / )</option><option value=", ">Comma</option><option value="">None</option></select></div>
+                  <div class="field" style="flex:1;min-width:140px"><label for="artTarget">Write to</label><select id="artTarget"><option value="ItemDescription">ItemDescription (200)</option><option value="ArtName">ArtName (2000)</option><option value="both">Both</option></select></div>
+                </div>
+                <label class="check small"><input type="checkbox" id="artOverride"> Replace the file's value even when the column is mapped</label>
+                <div class="row"><button class="btn primary sm" id="artApply" type="button">Apply pattern</button><button class="btn sm" id="artClear" type="button">Remove</button><span class="small muted" id="artStatus"></span></div>
+              </div>
+              <div class="stack"><div class="eyebrow">Preview (first rows)</div><div id="artPreview" class="log" style="height:auto;max-height:180px"></div></div>
+            </div>
+          </div>
+        </div>
+        <aside class="card schema" id="schemaPanel">
+          <div class="row" style="justify-content:space-between">
+            <div><h3>Target schema</h3><div class="small muted" id="schemaSub"></div></div>
+            <select id="schemaSrc" aria-label="Schema source" style="width:auto"><option value="catalog">Embedded catalog</option><option value="live">Live: INFORMATION_SCHEMA</option></select>
+          </div>
+          <input type="text" id="schemaFilter" placeholder="Filter columns, tables, views…" aria-label="Filter schema">
+          <div id="schemaTree" class="schema-tree"></div>
+          <div class="small muted" id="schemaHint">Click a column to map it to the highlighted source column. Dependencies show the master table each FK points to and the lookup query the legacy form runs.</div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4 SUPPLIERS -->
+  <section class="panel" data-step="4">
+    <div class="panel-head"><div><h2>Suppliers</h2><p class="muted">Suppliers are created before the stock so every stock line can point to a <span class="mono">vendormaster</span> row, and each new supplier gets a ledger in <span class="mono">M_GeneralLedger</span> under Sundry Creditors with its opening outstanding.</p></div></div>
+    <div class="stack">
+      <div class="src-grid" id="supModes">
+        <button type="button" class="src" data-supmode="column"><span class="ic">≡</span><b>From the stock file</b><span class="small muted">Distinct values of the mapped Supplier column. New names are created with no outstanding.</span></button>
+        <button type="button" class="src" data-supmode="single"><span class="ic">1</span><b>Single supplier</b><span class="small muted">Franchise / SOR / consignment: the whole opening stock belongs to one supplier.</span></button>
+        <button type="button" class="src" data-supmode="file"><span class="ic">⇪</span><b>Upload supplier file</b><span class="small muted">Separate Excel/CSV with GSTIN, contact, credit days and opening outstanding (Dr/Cr).</span></button>
+      </div>
+      <div class="card stack" id="supSingle" hidden>
+        <div class="grid g2">
+          <div class="field"><label for="supSingleSel">Supplier</label><select id="supSingleSel"></select></div>
+          <div class="field" id="supSingleNewWrap"><label for="supSingleName">New supplier name</label><input type="text" id="supSingleName" placeholder="e.g. Raymond Apparel (franchisor)"></div>
+          <div class="field"><label for="supSingleGst">GSTIN</label><input type="text" id="supSingleGst" placeholder="36AAACR1234A1Z5"></div>
+          <div class="field"><label for="supSingleOut">Opening outstanding</label><div class="row"><input type="text" id="supSingleOut" placeholder="0.00" style="flex:1"><select id="supSingleDrCr" style="width:auto"><option>Cr</option><option>Dr</option></select></div></div>
+        </div>
+        <p class="small muted">The Supplier column of every stock row is set to this supplier (overriding any value in the file).</p>
+      </div>
+      <div class="card stack" id="supFile" hidden>
+        <div class="drop" id="supDrop">
+          <b>Drop the supplier file here</b>
+          <span class="muted small">Expected columns (any order, any names — they are auto-mapped): Supplier Name, Code, GSTIN, PAN, Mobile, Email, Address, City, State, PIN, Credit Days, Opening Outstanding, Dr/Cr, As On</span>
+          <div class="row"><label class="btn primary" for="supInput">Choose file</label><input type="file" id="supInput" accept=".csv,.tsv,.txt,.xlsx,.xls" hidden><button class="btn" id="supSample" type="button">Load sample supplier file</button></div>
+          <div id="supChip" hidden></div>
+        </div>
+        <div id="supMapWrap" hidden class="stack">
+          <h3>Supplier column mapping</h3>
+          <div class="map-list"><div class="map-row map-head"><div>Source column</div><div></div><div>vendormaster / ledger field</div><div></div></div><div id="supMapRows"></div></div>
+        </div>
+      </div>
+      <div class="card stack" id="supLedger">
+        <div class="row" style="justify-content:space-between"><h3>Ledger creation</h3><label class="check small"><input type="checkbox" id="supCreateLedger" checked> Create ledger in M_GeneralLedger for each new supplier</label></div>
+        <div class="grid g4">
+          <div class="field"><label for="supGroup">Ledger group</label><select id="supGroup"><option>Sundry Creditors</option><option>Sundry Creditors - Consignment</option><option>Franchisor Account</option><option>Other Payables</option></select></div>
+          <div class="field"><label for="supGlType">GlType</label><input type="text" id="supGlType" value="S" title="Verify: GlType code used for Sundry Creditors in M_GeneralLedger"></div>
+          <div class="field"><label for="supObDate">Opening balance as on</label><input type="date" id="supObDate"></div>
+          <div class="field"><label for="supExisting">If supplier already exists</label><select id="supExisting"><option value="keep">Keep existing, ignore file outstanding</option><option value="update">Update details, post outstanding</option></select></div>
+        </div>
+      </div>
+      <div class="grid g4" id="supTiles"></div>
+      <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3>Suppliers in this import</h3><span class="small muted" id="supCount"></span></div>
+        <div class="tbl-wrap"><table id="supTable"><thead><tr><th>Supplier</th><th>Code</th><th>GSTIN</th><th>Status</th><th>Stock rows</th><th>Outstanding</th><th>Dr/Cr</th><th>Ledger</th><th>Issues</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 5 MASTER MAPPING -->
+  <section class="panel" data-step="5">
+    <div class="panel-head"><div><h2>Master mapping</h2><p class="muted">Every distinct value in a master column must point to an existing RetailCLIQ master, be created new, or be skipped. Use the bulk actions; row-by-row is the exception.</p></div>
+      <div class="row"><button class="btn primary" id="keepCreate" type="button">Keep matched, create the rest</button><button class="btn" id="autoMasters" type="button">Re-run auto match</button><button class="btn" id="togglePolicy" type="button">Policies per master</button></div>
+    </div>
+    <div class="stack">
+      <div class="card" id="itemIdentity" hidden></div>
+      <div class="grid g4" id="mmTiles"></div>
+      <div class="card stack" id="policyCard" hidden>
+        <div class="row" style="justify-content:space-between"><div><h3>Policy per master</h3><p class="small muted">One decision per master table, applied to every unresolved value. Matched values are kept as Existing.</p></div><div class="row"><button class="btn sm" id="policyAllNew" type="button">All → Create new</button><button class="btn sm primary" id="applyPolicies" type="button">Apply policies</button></div></div>
+        <div class="tbl-wrap"><table id="policyTable"><thead><tr><th>Master</th><th>Table</th><th>Distinct</th><th>Matched</th><th>Unresolved</th><th>Policy for unresolved</th><th>Default value (for “Map all to one”)</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="m-tabs" id="mTabs"></div>
+        <div class="stack" id="mmTools">
+          <div class="row" style="justify-content:space-between">
+            <div class="row">
+              <input type="text" id="mmSearch" placeholder="Search values…" style="max-width:200px" aria-label="Search values">
+              <div class="chips" id="mmFilter"><button type="button" class="chip on" data-mf="all">All</button><button type="button" class="chip" data-mf="unresolved">Unresolved</button><button type="button" class="chip" data-mf="existing">Existing</button><button type="button" class="chip" data-mf="new">New</button><button type="button" class="chip" data-mf="skip">Skip</button></div>
+            </div>
+            <div class="row"><button class="btn sm" id="tabFuzzy" type="button">Fuzzy match</button><button class="btn sm" id="tabNew" type="button">Unresolved → Create new</button><button class="btn sm" id="tabSkip" type="button">Unresolved → Skip</button></div>
+          </div>
+          <div class="row bulk-bar">
+            <label class="check small"><input type="checkbox" id="mmSelAll"> Select all shown</label>
+            <span class="small muted" id="mmSelCount">0 selected</span>
+            <span class="small">With selected →</span>
+            <select id="bulkExisting" style="max-width:260px" aria-label="Existing value for selected"></select>
+            <button class="btn sm" id="bulkApplyExisting" type="button">Map to this existing</button>
+            <button class="btn sm" id="bulkNew" type="button">Create new</button>
+            <button class="btn sm" id="bulkSkip" type="button">Skip</button>
+            <span class="small muted">·</span>
+            <button class="btn sm" id="bulkAllToOne" type="button">All unresolved → this existing</button>
+          </div>
+        </div>
+        <div id="mmList"></div>
+      </div>
+      <label class="check small"><input type="checkbox" id="rememberAliases" checked> Remember these matches as aliases for future imports (e.g. Pcs → PCS, GROCERY → GROCERY [CAT001])</label>
+    </div>
+  </section>
+
+  <!-- STEP 5 VALIDATION -->
+  <section class="panel" data-step="6">
+    <div class="panel-head"><div><h2>Validation</h2><p class="muted">Each row is checked against mandatory fields, duplicates, masters, quantities, dates and business rules. The industry profile decides what counts as a duplicate.</p></div>
+      <div class="row"><div class="field"><label for="profileSel">Industry profile</label><select id="profileSel" style="min-width:220px"></select></div><button class="btn" id="revalidate" type="button">Re-run validation</button></div>
+    </div>
+    <div class="alert info" id="profileNote"></div>
+    <div class="stack">
+      <div class="grid g4" id="valTiles"></div>
+      <div class="card stack">
+        <div class="row" style="justify-content:space-between">
+          <div class="chips" id="valFilter">
+            <button class="chip on" data-f="all" type="button">All</button>
+            <button class="chip" data-f="err" type="button">Errors</button>
+            <button class="chip" data-f="warn" type="button">Warnings</button>
+            <button class="chip" data-f="ok" type="button">Valid</button>
+          </div>
+          <div class="row"><label class="check small"><input type="checkbox" id="skipErrors" checked> Skip rows with errors (import the rest)</label></div>
+        </div>
+        <div class="tbl-wrap"><table id="valTable"><thead><tr><th>Row</th><th>Status</th><th>Key</th><th>Dates → HBS</th><th>Rule checks</th><th>Messages</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Rules applied</h3>
+        <div class="chips" id="ruleChips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 6 CONFIRM -->
+  <section class="panel" data-step="7">
+    <div class="panel-head"><div><h2>Confirm import</h2><p class="muted">Review what will happen. Nothing is written until you start the import.</p></div></div>
+    <div class="stack">
+      <div class="grid g4" id="confTiles"></div>
+      <div class="grid g2">
+        <div class="card"><h3 style="margin-bottom:8px">Import settings</h3>
+          <dl class="kv" id="confSettings"></dl>
+        </div>
+        <div class="card stack">
+          <h3>Options</h3>
+          <div class="field"><label for="dupPolicy">When a record already exists</label><select id="dupPolicy"><option value="update">Update existing record</option><option value="skip">Skip the row</option><option value="error">Treat as error</option></select></div>
+          <div class="field"><label for="postMode">Posting</label><select id="postMode"><option>Post immediately</option><option>Save as draft for approval</option></select></div>
+          <div class="field"><label for="purAcc">Purchase account (M_GeneralLedger)</label><select id="purAcc"></select></div>
+          <div class="field"><label for="chunkSize">Chunk size (rows per transaction)</label><select id="chunkSize"><option>5000</option><option selected>50000</option><option>100000</option></select></div>
+          <div class="field"><label for="remarks">Remarks (saved to audit)</label><input type="text" id="remarks" placeholder="e.g. Opening stock migration FY 2026-27"></div>
+          <label class="check"><input type="checkbox" id="confirmChk"> I have reviewed the counts above and want to start this import.</label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 data-i18n="dateConv">Date &amp; number conversion</h3><span class="small muted" id="dateConvSub"></span></div>
+        <div class="tbl-wrap"><table id="dateConvTable"><thead><tr><th>Field</th><th>Source format</th><th>Sample (source)</th><th>Parsed</th><th>Stored (HBS int)</th><th>ConvertHBSDate</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card" id="procCard">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3>Database execution plan</h3><button class="btn sm" id="copyProc" type="button">Copy T-SQL</button></div>
+        <p class="small muted" style="margin-bottom:8px">What the import service will run, in order, built from your mapping. Shown exactly as captured in SQL Profiler for the legacy form.</p>
+        <pre class="log" id="procPreview" style="height:auto;max-height:320px"></pre>
+      </div>
+      <div class="alert warn" id="confWarn" hidden></div>
+    </div>
+  </section>
+
+  <!-- STEP 7 IMPORT -->
+  <section class="panel" data-step="8">
+    <div class="panel-head"><div><h2>Importing</h2><p class="muted" id="impSub">Streamed validation → bulk load into staging (chunks of 50,000) → set-based posting per chunk → reconciliation. Pause/Cancel stops at the next chunk boundary; committed chunks stay. <b>This page simulates the pipeline; timings are illustrative.</b></p></div>
+      <div class="row"><button class="btn" id="pauseBtn" type="button">Pause</button><button class="btn danger" id="cancelBtn" type="button">Cancel</button></div>
+    </div>
+    <div class="stack">
+      <div class="card stack">
+        <div class="row" style="justify-content:space-between"><b id="impPct" class="mono">0%</b><span class="small muted" id="impEta"></span></div>
+        <div class="prog" id="prog"><i></i></div>
+        <div class="row" style="justify-content:space-between"><span class="small muted" id="impStatus">Preparing…</span><span class="small mono" id="impCount">0 / 0</span></div>
+        <div class="row small muted" id="impPhases"></div>
+      </div>
+      <div class="grid g4" id="impTiles"></div>
+      <div class="card"><h3 style="margin-bottom:8px">Live log</h3><div class="log" id="impLog"></div></div>
+    </div>
+  </section>
+
+  <!-- STEP 8 RESULT -->
+  <section class="panel" data-step="9">
+    <div class="panel-head"><div><h2 id="resTitle">Import completed</h2><p class="muted" id="resSub"></p></div>
+      <div class="row"><button class="btn" id="copyErrors" type="button">Copy error report</button><button class="btn" id="copyLog" type="button">Copy import log</button></div>
+    </div>
+    <div class="stack">
+      <div id="resAlert" class="alert ok"></div>
+      <div class="grid g4" id="resTiles"></div>
+      <div class="grid g2">
+        <div class="card"><h3 style="margin-bottom:8px">Audit</h3><dl class="kv" id="auditKv"></dl></div>
+        <div class="card stack"><h3>Rollback</h3>
+          <p class="muted small" id="rbText">Reversal is supported for this import type. Rolling back removes every record this batch created and restores updated records to their previous values.</p>
+          <div id="rbBox" class="row"><button class="btn danger" id="rbBtn" type="button">Rollback this batch</button></div>
+          <div id="rbConfirm" class="alert err" hidden style="flex-direction:column;gap:8px"><b>Roll back batch <span id="rbBatch" class="mono"></span>?</b><span class="small">This cannot be undone. Type ROLLBACK to confirm.</span><div class="row"><input type="text" id="rbInput" placeholder="ROLLBACK" style="max-width:180px"><button class="btn danger" id="rbGo" type="button" disabled>Confirm rollback</button><button class="btn ghost" id="rbNo" type="button">Keep batch</button></div></div>
+        </div>
+      </div>
+      <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3>Failed &amp; skipped rows</h3><span class="small muted" id="errCount"></span></div>
+        <div class="tbl-wrap"><table id="errTable"><thead><tr><th>Row</th><th>Outcome</th><th>Key</th><th>Reason</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card"><h3 style="margin-bottom:8px">Import log</h3><div class="log" id="resLog"></div></div>
+    </div>
+  </section>
+</main>
+
+<div class="actions">
+  <div class="actions-in">
+    <button class="btn" id="backBtn" type="button">← Back</button>
+    <div class="status" id="navStatus"></div>
+    <button class="btn primary" id="nextBtn" type="button">Continue →</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- RetailCLIQ schema catalog ----------
+   Source of truth in production: sys.tables / sys.views / sys.columns / sys.foreign_keys via the import API
+   (see SCHEMA_SQL below). Here it is embedded from the reference SQL supplied:
+   - Stock_Import_Export column list + types: exact, from the SQL Profiler "insert bulk" capture
+   - proc_StockImportwithSupplier params and @GSTXml shape: exact, from Profiler
+   - Itemproperties view, Price_Master, Tax_Master columns: exact, from the Apparels opening-stock query
+   - Lookup queries for vendormaster / CategoryMaster / UOMMaster / Tax_GroupMaster / M_GeneralLedger / CounterMaster: exact, from Profiler
+   - Columns marked inferred:true are not in the reference files and must be verified against RC26ERP_DEV. */
+const SCHEMA_SQL = `-- Run by the import API to build this panel live
+SELECT t.name AS table_name, c.name AS column_name, ty.name AS data_type, c.max_length, c.is_nullable,
+       fk.referenced_table = OBJECT_NAME(fkc.referenced_object_id), fk.referenced_column = COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id)
+FROM sys.columns c JOIN sys.tables t ON t.object_id = c.object_id JOIN sys.types ty ON ty.user_type_id = c.user_type_id
+LEFT JOIN sys.foreign_key_columns fkc ON fkc.parent_object_id = c.object_id AND fkc.parent_column_id = c.column_id
+WHERE t.name IN ('Itemmaster','Price_Master','Invtransaction','Stock_Import_Export','vendormaster','CustomerMaster')
+UNION ALL
+SELECT v.name, c.name, ty.name, c.max_length, c.is_nullable, NULL, NULL
+FROM sys.columns c JOIN sys.views v ON v.object_id = c.object_id JOIN sys.types ty ON ty.user_type_id = c.user_type_id
+WHERE v.name IN ('Itemproperties');`;
+
+/* Master tables: real lookup SQL from the profiler trace where available. rows = sample data for the prototype. */
+const MASTER_TABLES = {
+  vendormaster:   {label:"Supplier",id:"vend_uid",name:"vend_name",sql:"select vend_uid SupplierId, vend_name SupplierName from vendormaster where Status_id='S'",rows:[["V10001","Sri Lakshmi Traders"],["V10002","Metro Cash & Carry"],["V10003","Medplus Distributors"],["V10004","Heritage Foods"],["V10005","Raymond Apparel"]]},
+  CustomerMaster: {label:"Customer",id:"CustId",name:"CustName",inferred:true,sql:"select CustId, CustName from CustomerMaster where Status='S'",rows:[["CU10001","Walk-in"],["CU10002","Ravi Kumar"],["CU10003","Sunrise Hospital"],["CU10004","Apex Pharmacy"]]},
+  CategoryMaster: {label:"Category",id:"CatId",name:"CatName",extra:"HSNCode",sql:"Select CatId, CatName As [Category], HSNCode As [HSN_SACCode] From CategoryMaster Where Status='S'",rows:[["CAT001","GROCERY","2106"],["CAT002","PHARMA","3004"],["CAT003","BAKERY","1905"],["CAT004","DAIRY","0401"],["CAT005","HOUSEHOLD","3402"],["CAT006","APPAREL","6204"],["CAT007","FRESH PRODUCE","0709"]]},
+  SubCategoryMaster:{label:"Sub Category",id:"SCMId",name:"SCMName",inferred:true,sql:"select SCMId, SCMName from SubCategoryMaster where Status='S'",rows:[["SCM001","MILK"],["SCM002","TABLETS"],["SCM003","BREAD"],["SCM004","SHIRTS"],["SCM005","SAREES"]]},
+  DivisionMaster: {label:"Division",id:"DivId",name:"DivName",inferred:true,sql:"select DivId, DivName from DivisionMaster where Status='S'",rows:[["DIV01","FOOD"],["DIV02","PHARMA"],["DIV03","GENERAL"],["DIV04","APPAREL"]]},
+  DepartmentMaster:{label:"Department",id:"SDMId",name:"SDMName",inferred:true,sql:"select SDMId, SDMName from DepartmentMaster where Status='S'",rows:[["SDM01","FMCG"],["SDM02","OTC"],["SDM03","MENS"],["SDM04","WOMENS"]]},
+  StyleMaster:    {label:"Style",id:"StyleId",name:"StyleName",inferred:true,sql:"select StyleId, StyleName from StyleMaster where Status='S'",rows:[["ST001","REGULAR"],["ST002","SLIM FIT"],["ST003","CASUAL"]]},
+  DesignMaster:   {label:"Design",id:"DesId",name:"DesName",inferred:true,sql:"select DesId, DesName from DesignMaster where Status='S'",rows:[["DS001","PLAIN"],["DS002","CHECKS"],["DS003","PRINTED"]]},
+  SizeMaster:     {label:"Size",id:"SizeId",name:"SizeOfDress",inferred:true,sql:"select SizeId, SizeOfDress from SizeMaster where Status='S'",rows:[["SZ01","S"],["SZ02","M"],["SZ03","L"],["SZ04","XL"],["SZ05","FREE"]]},
+  ColorMaster:    {label:"Color",id:"ColorId",name:"ColorName",inferred:true,sql:"select ColorId, ColorName from ColorMaster where Status='S'",rows:[["CL01","WHITE"],["CL02","BLACK"],["CL03","BLUE"],["CL04","RED"],["CL05","NA"]]},
+  BrandMaster:    {label:"Brand",id:"BrandId",name:"BrandName",inferred:true,sql:"select BrandId, BrandName from BrandMaster where Status='S'",rows:[["BR001","AMUL"],["BR002","CIPLA"],["BR003","BRITANNIA"],["BR004","TATA"],["BR005","HERITAGE"],["BR006","RAYMOND"],["BR007","GENERIC"]]},
+  UOMMaster:      {label:"UOM",id:"UOMId",name:"UOMName",sql:"Select UOMId, UOMName from UOMMaster where Status='S'",rows:[["PCS","PCS"],["KG","KG"],["GM","GM"],["LTR","LTR"],["ML","ML"],["BOX","BOX"],["PKT","PKT"],["STRIP","STRIP"],["MTR","MTR"],["BAG","BAG"]]},
+  Tax_Master:     {label:"Tax",id:"Tax_uid",name:"Tax_Desc",extra:"Tax_per",sql:"select Tax_uid, Tax_per, Tax_Type_Inc_Exl from Tax_Master where Status='S'",rows:[["TX00","GST 0%","0"],["TX05","GST 5%","5"],["TX12","GST 12%","12"],["TX18","GST 18%","18"],["TX28","GST 28%","28"]]},
+  Tax_GroupMaster:{label:"Tax Group",id:"TaxGroupId",name:"TaxGroupName",inferred:true,sql:"Select TaxGroupId, TaxGroupName from Tax_GroupMaster",rows:[["TG-GST","GST"],["TG-EXEMPT","EXEMPT"]]},
+  BranchMaster:   {label:"Branch",id:"BranchId",name:"BranchName",inferred:true,sql:"select BranchId, BranchName from BranchMaster where CompId=@CompId and Status='S'",rows:[["BMS10001","HYD-MAIN"],["BMS10002","HYD-KUKATPALLY"],["BMS10003","VJA-BENZ"],["BMS10004","ONG-CENTRAL"],["BMS10005","BLR-KORAMANGALA"]]},
+  CounterMaster:  {label:"Counter",id:"CounterId",name:"CounterName",sql:"exec Sp_GetCounter @Flags=10, @MACId=@MAC  --  Select RowId From dbo.SplitComa(',',(Select Desc6 from CounterMaster Where CounterId=@CounterId)) Where value=@UserId",rows:[["COU10001","COUNTER 1"],["COU10002","COUNTER 2"],["COU10003","BACK OFFICE"]]},
+  M_GeneralLedger:{label:"Purchase A/c",id:"GlId",name:"GLName",sql:"select GlId, GLName from M_GeneralLedger where desc5=1 and GlType='P' and compid=@CompId",rows:[["24-HB0001","PURCHASE A/C"],["24-HB0002","PURCHASE - PHARMA"],["24-HB0003","PURCHASE - APPAREL"]]},
+  Itemmaster:     {label:"Item (by code)",id:"Itemcode",name:"Itemdesc",extra:"OEMCode",matchBy:"code",sql:"select Itemcode, Itemdesc, OEMCode from Itemmaster where status='A'  -- match on Itemcode or OEMCode only; Itemdesc is composed by the Itemproperties view",rows:[["4127040959","AMUL TAZA MILK 500ML","AMUL-TM-500"],["4127040960","PARACETAMOL 500MG STRIP","CIP-PCM-500"],["4127040961","BRITANNIA BREAD 400G","BRIT-BR-400"],["4127040962","TATA SALT 1KG","TATA-SALT-1"],["4127040963","HERITAGE CURD 200G","HER-CURD-200"]]},
+  Batch:          {label:"Batch",id:"BatchNo",name:"BatchNo",inferred:true,sql:"select distinct BatchNo from Invtransaction where Itemcode=@Itemcode",rows:[]}
+};
+/* Flat name lists used by master mapping (name column, with id shown in brackets) */
+const MASTERS={};Object.entries(MASTER_TABLES).forEach(([k,m])=>{MASTERS[k]=m.rows.map(r=>r[0]===r[1]?r[0]:`${r[1]} [${r[0]}]`)});
+
+/* Column definition. key = real column name. type: text|code|qty|amount|date|phone|email|gstin. master = MASTER_TABLES key. role = business-rule hook. */
+const C=(key,o={})=>Object.assign({key,label:key,req:false,type:"text",sql:"VarChar(100)"},o);
+const STAGING_COLS=[ /* Stock_Import_Export — exact, from Profiler insert bulk */
+  C("SlNo",{sql:"VarChar(20)",syn:["slno","sno","serial","sl"]}),
+  C("ItemCode",{sql:"VarChar(20)",type:"code",identity:true,syn:["itemcode","code","itemid","productid","item","productcode","barcode"],note:"Identity, not a lookup: exists in Itemmaster → update, else the procedure inserts"}),
+  C("OEMCode",{sql:"VarChar(50)",type:"code",dupKey:true,identity:true,syn:["oemcode","oem","supplieritemcode","vendorcode","mfrcode","partno","articleno","article","sku","stockitem","stockitemname","itemcode"],note:"Identity with ItemCode; duplicate-check key"}),
+  C("ItemDescription",{sql:"VarChar(200)",req:true,syn:["itemdescription","itemdesc","description","itemname","name","product","productname","stockitemname","desc","article"]}),
+  C("UOMId",{sql:"NVarChar(30)",req:true,master:"UOMMaster",syn:["uomid","uom","unit","units","baseunit","measure"]}),
+  C("Qty",{sql:"VarChar(20)",req:true,type:"qty",role:"qty",syn:["qty","quantity","closingqty","closingquantity","stockqty","curqty","openingqty","nos","balance","stock","opqty"]}),
+  C("PurchasePrice",{sql:"VarChar(20)",req:true,type:"amount",role:"rate",syn:["purchaseprice","prate","rate","cost","costprice","purchaserate","closingrate","costrate","avgrate","landingcost","oprate"]}),
+  C("MRP",{sql:"VarChar(20)",type:"amount",role:"mrp",syn:["mrp","maxprice","listprice","maximumretailprice"]}),
+  C("Discount",{sql:"VarChar(20)",type:"amount",syn:["discount","disvalue","disc","discamt","salediscount"]}),
+  C("DisType",{sql:"VarChar(10)",syn:["distype","discounttype","disctype"],note:"P = percent, A = amount"}),
+  C("DiscountPrice",{sql:"VarChar(20)",type:"amount",role:"salePrice",syn:["discountprice","sstdprice","saleprice","sellingprice","sellprice","retailprice","sp","stdprice"]}),
+  C("Division",{sql:"VarChar(100)",master:"DivisionMaster",syn:["division","divname","div"]}),
+  C("Department",{sql:"VarChar(100)",master:"DepartmentMaster",syn:["department","sdmname","dept","section"]}),
+  C("Category",{sql:"VarChar(100)",req:true,master:"CategoryMaster",syn:["category","catname","group","stockgroup","itemgroup","cat"]}),
+  C("SubCategory",{sql:"VarChar(100)",master:"SubCategoryMaster",syn:["subcategory","scmname","subcat","subgroup"]}),
+  C("Style",{sql:"VarChar(100)",master:"StyleMaster",syn:["style","stylename","fit"]}),
+  C("Design",{sql:"VarChar(100)",master:"DesignMaster",syn:["design","desname","pattern"]}),
+  C("Size",{sql:"VarChar(100)",master:"SizeMaster",syn:["size","sizeofdress","sizes"]}),
+  C("Color",{sql:"VarChar(100)",master:"ColorMaster",syn:["color","colour","colorname","colourname","shade"]}),
+  C("Brand",{sql:"VarChar(100)",master:"BrandMaster",syn:["brand","brandname","manufacturer","make","company","mfr","stockgroup"]}),
+  C("Fabric",{sql:"VarChar(100)",syn:["fabric","material","cloth"]}),
+  C("ArtName",{sql:"VarChar(2000)",syn:["artname","artno","articlename","articleno","styleno"]}),
+  C("TransNo",{sql:"VarChar(20)",syn:["transno","refno","reference","docno","voucherno","grnno"]}),
+  C("TransDate",{sql:"VarChar(50) → HBS int via sp_englishHBS",type:"date",role:"asOn",req:true,syn:["transdate","date","ason","asondate","openingdate","stockdate","entrydate"]}),
+  C("Tokens",{sql:"VarChar(50)",syn:["tokens","token"]}),
+  C("Tax",{sql:"VarChar(50)",req:true,master:"Tax_Master",role:"outTax",syn:["tax","outtax","gst","gstrate","taxrate","taxper","vat","salestax","taxclass","taxcategory"]}),
+  C("Taxtype",{sql:"VarChar(10)",syn:["taxtype","outtaxtype","taxtypeincexl","inclusive","inclexcl"],note:"I = inclusive, E = exclusive"}),
+  C("PacketNo",{sql:"VarChar(50)",syn:["packetno","packet","packno","bale","bundle"]}),
+  C("CounterID",{sql:"NVarChar(30)",master:"CounterMaster",syn:["counterid","counter","till"]}),
+  C("InTax",{sql:"VarChar(50)",master:"Tax_Master",role:"inTax",syn:["intax","purchasetax","inputtax","purchasegst"]}),
+  C("InTaxtype",{sql:"VarChar(10)",syn:["intaxtype","purchasetaxtype"]}),
+  C("Supplier",{sql:"VarChar(30)",req:true,master:"vendormaster",syn:["supplier","suppliername","vendor","vendorname","party","partyname","vendname"]}),
+  C("Verticle1",{sql:"VarChar(100)",label:"Verticle1 (HSN)",role:"hsn",syn:["verticle1","hsncode","hsn","hsnsac","sac"]}),
+  C("Verticle2",{sql:"VarChar(100)",syn:["verticle2","attribute2","season"]}),
+  C("Verticle3",{sql:"VarChar(100)",syn:["verticle3","attribute3","occasion"]}),
+  C("P_Distributor_rate",{sql:"VarChar(50)",type:"amount",syn:["pdistributorrate","distributorrate","wsp","wholesaleprice","dealerprice"]}),
+  C("TokenType",{sql:"VarChar(10)",syn:["tokentype"]}),
+  C("PurchaseDiscount",{sql:"VarChar(20)",type:"amount",syn:["purchasediscount","purdisc","purchasedisc"]}),
+  C("PurchaseDiscountType",{sql:"VarChar(10)",syn:["purchasediscounttype","purdisctype"],note:"P = percent, A = amount"}),
+  /* Extra columns the Apparels query exposes for batch/expiry (land in Invtransaction, not staging) */
+  C("BatchNo",{sql:"VarChar(50)  [Invtransaction]",master:"Batch",inferred:true,syn:["batchno","batch","lot","lotno"]}),
+  C("PackedDate",{sql:"int (HBS)  [Invtransaction]",type:"date",inferred:true,syn:["packeddate","mfgdate","mfg","manufacturedate","packdate"]}),
+  C("ExpiryDate",{sql:"int (HBS)  [Invtransaction]",type:"date",role:"expiry",inferred:true,syn:["expirydate","expiry","expdate","exp","bestbefore","useby"]})
+];
+/* Objects shown in the schema panel (tables, views, procs) with their columns and dependencies */
+const CATALOG = [
+  {name:"Stock_Import_Export",kind:"staging",desc:"Staging table the legacy form bulk-inserts into (DELETE FROM … then insert bulk).",cols:STAGING_COLS.filter(c=>!c.inferred),
+   deps:[["proc_StockImportwithSupplier","reads staging → writes Itemmaster, Price_Master, Invtransaction, GST"]]},
+  {name:"Itemmaster",kind:"table",desc:"Item identity (Itemcode PK, OEMCode) plus FK ids to the attribute masters. The import matches items by code only; attributes are resolved through the masters, which is what Itemproperties joins.",cols:[
+    C("Itemcode",{sql:"VarChar(20) PK"}),C("OEMCode",{sql:"VarChar(50)"}),C("Itemdesc",{sql:"VarChar(200)"}),C("UOMId",{sql:"NVarChar(30) FK",master:"UOMMaster"}),C("HSNCode",{sql:"VarChar(20)"}),
+    C("Tax_Uid",{sql:"VarChar(20) FK",master:"Tax_Master"}),C("DivId",{sql:"FK",master:"DivisionMaster",inferred:true}),C("SDMId",{sql:"FK",master:"DepartmentMaster",inferred:true}),C("CatId",{sql:"FK",master:"CategoryMaster",inferred:true}),
+    C("SCMId",{sql:"FK",master:"SubCategoryMaster",inferred:true}),C("StyleId",{sql:"FK",master:"StyleMaster",inferred:true}),C("DesId",{sql:"FK",master:"DesignMaster",inferred:true}),C("SizeId",{sql:"FK",master:"SizeMaster",inferred:true}),
+    C("ColorId",{sql:"FK",master:"ColorMaster",inferred:true}),C("BrandId",{sql:"FK",master:"BrandMaster",inferred:true}),C("Verticle2",{}),C("Verticle3",{}),C("status",{sql:"Char(1)  A = active"})],
+   deps:["UOMMaster","Tax_Master","CategoryMaster","SubCategoryMaster","DivisionMaster","DepartmentMaster","StyleMaster","DesignMaster","SizeMaster","ColorMaster","BrandMaster"]},
+  {name:"Price_Master",kind:"table",desc:"Prices per item. Desc3 holds the input-tax Tax_uid (joined as D in the Apparels query).",cols:[
+    C("Itemcode",{sql:"VarChar(20) FK → Itemmaster"}),C("MRP",{sql:"decimal",type:"amount"}),C("dis_value",{sql:"decimal",type:"amount"}),C("dis_type",{sql:"VarChar(10)  P/A"}),C("S_std_Price",{sql:"decimal",type:"amount"}),C("Desc3",{sql:"VarChar(20) FK → Tax_Master.Tax_uid (InTax)",master:"Tax_Master"}),C("P_Distributor_rate",{sql:"decimal",type:"amount",inferred:true})],
+   deps:["Itemmaster","Tax_Master"]},
+  {name:"Itemproperties",kind:"view",desc:"View, not a table: Itemmaster keys + FK ids joined to the attribute masters, so names appear here (DivName ← DivisionMaster, SDMName ← DepartmentMaster, CatName ← CategoryMaster, SCMName ← SubCategoryMaster, StyleName, DesName, SizeOfDress, ColorName, BrandName, PartyName ← vendormaster, CurQty/Prate ← stock). Item description is composed from these, never looked up as a master.",cols:[
+    C("Itemcode",{}),C("OEMCode",{}),C("Itemdesc",{}),C("CurQty",{type:"qty"}),C("Prate",{type:"amount"}),C("DivName",{}),C("SDMName",{}),C("CatName",{}),C("SCMName",{}),C("StyleName",{}),C("DesName",{}),C("SizeOfDress",{}),C("ColorName",{}),C("BrandName",{}),C("HSNCode",{}),C("Verticle2",{}),C("Verticle3",{}),C("Tax_Uid",{}),C("PartyName",{}),C("status",{})],
+   deps:["Itemmaster","Price_Master","Tax_Master","vendormaster"]},
+  {name:"Invtransaction",kind:"table",desc:"Inventory ledger written by proc_StockImportwithSupplier. Dates stored as HBS int.",cols:[
+    C("TransNo",{sql:"VarChar(20)",inferred:true}),C("TransDate",{sql:"int (HBS)",type:"date",inferred:true}),C("TransType",{sql:"VarChar(10)  OS = opening stock",inferred:true}),C("Itemcode",{sql:"FK → Itemmaster",master:"Itemmaster",inferred:true}),C("BranchId",{sql:"FK → BranchMaster",master:"BranchMaster",inferred:true}),
+    C("CounterID",{sql:"FK → CounterMaster",master:"CounterMaster",inferred:true}),C("Qty",{type:"qty",inferred:true}),C("Rate",{type:"amount",inferred:true}),C("MRP",{type:"amount",inferred:true}),C("BatchNo",{inferred:true}),C("PackedDate",{sql:"int (HBS)",type:"date",inferred:true}),C("ExpiryDate",{sql:"int (HBS)",type:"date",inferred:true}),C("vend_uid",{sql:"FK → vendormaster",master:"vendormaster",inferred:true}),C("MRNo",{sql:"VarChar(100)  from @MRNo output",inferred:true}),C("CompId",{inferred:true}),C("UserId",{inferred:true})],
+   deps:["Itemmaster","BranchMaster","CounterMaster","vendormaster","Tax_Master"]},
+  {name:"vendormaster",kind:"table",desc:"Suppliers. Status_id='S' = active.",cols:[C("vend_uid",{sql:"PK"}),C("vend_name",{}),C("Status_id",{sql:"Char(1)"}),C("GSTIN",{type:"gstin",inferred:true}),C("Mobile",{type:"phone",inferred:true}),C("Email",{type:"email",inferred:true}),C("City",{inferred:true}),C("Credit_Days",{type:"qty",inferred:true})],deps:["Tax_GroupMaster"]},
+  {name:"CustomerMaster",kind:"table",desc:"Customers (table name to verify; legacy screens use CustId/CustName).",cols:[C("CustId",{sql:"PK",inferred:true}),C("CustName",{inferred:true}),C("Mobile",{type:"phone",inferred:true}),C("Email",{type:"email",inferred:true}),C("GSTIN",{type:"gstin",inferred:true}),C("BranchId",{master:"BranchMaster",inferred:true}),C("CreditLimit",{type:"amount",inferred:true}),C("City",{inferred:true}),C("Pincode",{inferred:true}),C("Status",{inferred:true})],deps:["BranchMaster"]},
+  {name:"proc_StockImportwithSupplier",kind:"proc",desc:"Consumes Stock_Import_Export. Params: @CompId, @UserId, @BranchId, @PurchaseAccount (M_GeneralLedger.GlId), @MRNo output, @GSTXml.",cols:[
+    C("@CompId",{sql:"varchar  C001"}),C("@UserId",{sql:"varchar  U10001"}),C("@BranchId",{sql:"varchar  FK → BranchMaster",master:"BranchMaster"}),C("@PurchaseAccount",{sql:"varchar  FK → M_GeneralLedger.GlId",master:"M_GeneralLedger"}),C("@MRNo",{sql:"nvarchar(100) output  e.g. 4827030001 - 4827030004"}),C("@GSTXml",{sql:"xml  <GST><GST_ITEMS SlNo Itemcode HSNCode CGST_Per CGST_Amt SGST_Per SGST_Amt IGST_Per IGST_Amt UTGST_Per UTGST_Amt/></GST>"})],
+   deps:["Stock_Import_Export","M_GeneralLedger","BranchMaster","sp_englishHBS (TransDate → int)"]}
+];
+const CATALOG_COL=(t,c)=>(CATALOG.find(x=>x.name===t)||{cols:[]}).cols.find(x=>x.key===c);
+
+/* Import types → target column sets (real column names) */
+const pick=(t,keys,over={})=>keys.map(k=>Object.assign({},CATALOG_COL(t,k)||C(k),{table:t},over[k]||{}));
+const IMPORT_TYPES = {
+  stock:{label:"Opening Stock (with Supplier)",table:"Stock_Import_Export",proc:"proc_StockImportwithSupplier",rollback:true,fields:STAGING_COLS.map(c=>Object.assign({table:c.inferred?"Invtransaction":"Stock_Import_Export"},c))},
+  item:{label:"Item Master",table:"Itemmaster",rollback:true,fields:pick("Itemmaster",["Itemcode","OEMCode","Itemdesc","UOMId","HSNCode","Tax_Uid","DivId","SDMId","CatId","SCMId","StyleId","DesId","SizeId","ColorId","BrandId","Verticle2","Verticle3"],
+    {Itemcode:{req:true,type:"code",dupKey:true,syn:["itemcode","code","sku","item","productcode"]},Itemdesc:{req:true,syn:["itemdesc","description","itemname","name","product"]},UOMId:{req:true,syn:["uomid","uom","unit"]},Tax_Uid:{req:true,syn:["taxuid","tax","gst","taxrate"]},HSNCode:{syn:["hsncode","hsn","sac"]},CatId:{req:true,syn:["catid","category","catname","group"]},BrandId:{syn:["brandid","brand","brandname"]},ColorId:{syn:["colorid","color","colour"]},SizeId:{syn:["sizeid","size"]},DivId:{syn:["divid","division"]},SDMId:{syn:["sdmid","department","dept"]},SCMId:{syn:["scmid","subcategory"]},StyleId:{syn:["styleid","style"]},DesId:{syn:["desid","design"]}})
+    .concat(pick("Price_Master",["MRP","S_std_Price","dis_value","dis_type","Desc3"],{MRP:{role:"mrp",syn:["mrp"]},S_std_Price:{role:"salePrice",syn:["sstdprice","saleprice","sellingprice","sp"]},dis_value:{syn:["disvalue","discount"]},dis_type:{syn:["distype","discounttype"]},Desc3:{label:"Desc3 (InTax)",syn:["intax","purchasetax"]}}))},
+  supplier:{label:"Supplier Master",table:"vendormaster",rollback:true,fields:pick("vendormaster",["vend_uid","vend_name","GSTIN","Mobile","Email","City","Credit_Days"],{vend_uid:{req:true,type:"code",dupKey:true,syn:["venduid","supcode","suppliercode","vendorcode","supplierid","code"]},vend_name:{req:true,syn:["vendname","supname","suppliername","vendor","vendorname","supplier","name"]},GSTIN:{req:true,syn:["gstin","gstno","gst","tin"]},Mobile:{syn:["mobile","phone","contact","mobileno"]},Email:{syn:["email","mail"]},City:{syn:["city","town"]},Credit_Days:{syn:["creditdays","paymentdays","terms"]}})},
+  customer:{label:"Customer Master",table:"CustomerMaster",rollback:true,fields:pick("CustomerMaster",["CustId","CustName","Mobile","Email","GSTIN","BranchId","CreditLimit","City","Pincode"],{CustId:{req:true,type:"code",dupKey:true,syn:["custid","custcode","customercode","customerid","code"]},CustName:{req:true,syn:["custname","customername","customer","name","party"]},Mobile:{req:true,syn:["mobile","phone","contact","mobileno","cell"]},Email:{syn:["email","mail","emailid"]},GSTIN:{syn:["gstin","gstno","gst"]},BranchId:{syn:["branchid","branch","store","homebranch"]},CreditLimit:{syn:["creditlimit","limit"]},City:{syn:["city","town"]},Pincode:{syn:["pincode","pin","zip","postalcode"]}})},
+  purchase:{label:"Purchase (Invtransaction)",table:"Invtransaction",rollback:false,fields:pick("Invtransaction",["TransNo","TransDate","BranchId","vend_uid","Itemcode","BatchNo","ExpiryDate","Qty","Rate","MRP"],{TransNo:{req:true,syn:["transno","billno","invoiceno","invno","grnno","voucherno"]},TransDate:{req:true,role:"asOn",syn:["transdate","billdate","invoicedate","date","grndate"]},BranchId:{req:true,syn:["branchid","branch","store"]},vend_uid:{req:true,syn:["venduid","supplier","vendor","party","suppliername"]},Itemcode:{req:true,syn:["itemcode","code","sku","item"]},BatchNo:{syn:["batchno","batch","lot"]},ExpiryDate:{role:"expiry",syn:["expirydate","expiry","expdate"]},Qty:{req:true,role:"qty",syn:["qty","quantity"]},Rate:{req:true,role:"rate",syn:["rate","cost","purchaserate","price"]},MRP:{role:"mrp",syn:["mrp"]}})},
+  sales:{label:"Sales (Invtransaction)",table:"Invtransaction",rollback:false,fields:pick("Invtransaction",["TransNo","TransDate","BranchId","CounterID","Itemcode","Qty","Rate","MRP"],{TransNo:{req:true,syn:["transno","invno","invoiceno","invoice","billno"]},TransDate:{req:true,role:"asOn",syn:["transdate","invdate","invoicedate","date","billdate"]},BranchId:{req:true,syn:["branchid","branch","store"]},CounterID:{syn:["counterid","counter","till"]},Itemcode:{req:true,syn:["itemcode","code","sku","item"]},Qty:{req:true,role:"qty",syn:["qty","quantity"]},Rate:{req:true,role:"rate",syn:["rate","price","saleprice"]},MRP:{role:"mrp",syn:["mrp"]}}).concat([Object.assign(C("CustId",{req:true,master:"CustomerMaster",inferred:true,syn:["custid","customer","customername","party","custcode","buyer"]}),{table:"Invtransaction"})])}
+};
+const SYN={}; /* legacy synonym table no longer used; synonyms live on each column */
+/* Sample files */
+const SAMPLE_STOCK = `SlNo,OEMCode,ItemDescription,UOM,Qty,PurchasePrice,MRP,Discount,DisType,Category,SubCategory,Brand,Size,Color,HSNCODE,InTax,InTaxtype,OutTax,OutTaxtype,SupplierName,BatchNo,ExpiryDate,TransDate
+1,RAY-SH-1001,RAYMOND FORMAL SHIRT WHITE,PCS,24,899.00,1499.00,10,P,APPAREL,SHIRTS,RAYMOND,M,WHITE,62052000,5,E,5,I,Raymond Apparel,,,01/04/2026
+2,RAY-SH-1002,RAYMOND FORMAL SHIRT BLUE,PCS,18,899.00,1499.00,10,P,APPAREL,SHIRTS,RAYMOND,L,BLUE,62052000,5,E,5,I,Raymond Apparel,,,01/04/2026
+3,AMUL-TM-500,AMUL TAZA MILK 500ML,PCS,240,26.00,28.00,0,A,DAIRY,MILK,AMUL,,,04011000,0,E,0,I,Heritage Foods,B2409A,20/10/2026,01/04/2026
+4,CIP-PCM-500,PARACETAMOL 500MG STRIP,STRIP,1500,9.50,14.00,0,A,PHARMA,TABLETS,CIPLA,,,30049099,12,E,12,I,Medplus Distributors,PCM1123,31/03/2027,01/04/2026
+5,BRIT-BR-400,BRITANNIA BREAD 400G,PCS,60,32.00,40.00,0,A,BAKERY,BREAD,BRITANNIA,,,19052000,0,E,0,I,Metro Cash & Carry,,05/04/2026,01/04/2026
+6,TATA-SALT-1,TATA SALT 1KG,KG,120,21.00,25.00,0,A,GROCERY,,TATA,,,25010020,0,E,0,I,Sri Lakshmi Traders,,,01/04/2026
+7,HER-CURD-200,HERITAGE CURD 200G,Pcs,80,18.00,20.00,0,A,DAIRY,,HERITAGE,,,04031000,0,E,0,I,Heritage Foods,HC0401,10/04/2026,01/04/2026
+8,RAY-SH-1001,RAYMOND FORMAL SHIRT WHITE,PCS,24,899.00,1499.00,10,P,APPAREL,SHIRTS,RAYMOND,M,WHITE,62052000,5,E,5,I,Raymond Apparel,,,01/04/2026
+9,LAYS-CL-52,LAYS CLASSIC 52G,PKT,,15.00,20.00,0,A,GROCERY,,PEPSICO,,,19059030,12,E,12,I,Metro Cash & Carry,,30/06/2026,01/04/2026
+10,CG-ST-100,COLGATE STRONG 100G,PCS,200,52.00,60.00,0,A,HOUSEHOLD,,COLGATE,,,33061020,18,E,18,I,Metro Cash & Carry,CG1177,31/08/2027,01/04/2026
+11,SURF-1KG,SURF EXCEL 1KG,KG,-12,145.00,160.00,0,A,HOUSEHOLD,,HUL,,,34022010,18,E,18,I,Sri Lakshmi Traders,,,01/04/2026
+12,CIP-AZ-500,CIPLA AZITHRO 500 TAB,STRIP,300,42.00,68.00,0,A,PHARMA,TABLETS,CIPLA,,,30042099,12,E,12,I,Medplus Distributors,AZ2210,31/02/2026,01/04/2026
+13,SAR-KAN-01,KANCHIPURAM SILK SAREE,PCS,6,4200.00,6999.00,5,P,APPAREL,SAREES,GENERIC,FREE,RED,50071000,5,E,5,I,Raymond Apparel,,,01/04/2026
+14,AMUL-BT-500,AMUL BUTTER 500G,PCS,24,245.00,275.00,0,A,DAIRY,,AMUL,,,04051000,12,E,12,I,Heritage Foods,AB0322,31/12/2025,01/04/2026
+15,MAGGI-70,NESTLE MAGGI 70G,PKT,360,12.50,14.00,0,A,GROCERY,,NESTLE,,,19023010,18,E,18,I,Sri Lakshmi Traders,,15/11/2026,01/04/2026
+16,,UNKNOWN LINE ITEM,PCS,10,1.00,1.00,0,A,GROCERY,,GENERIC,,,,0,E,0,I,Sri Lakshmi Traders,,,01/04/2026
+17,DAW-BAS-5,DAAWAT BASMATI 5KG,BAG,30,620.00,699.00,0,A,GROCERY,,DAAWAT,,,10063020,5,E,5,I,Sri Lakshmi Traders,,,01/04/2026
+18,RAY-TR-2001,RAYMOND TROUSER GREY,PCS,12,1250.00,1999.00,15,P,APPAREL,TROUSERS,RAYMOND,34,GREY,62034200,5,E,5,I,Raymond Apparel,,,01-04-2026`;
+
+const SAMPLE_TALLY = `Stock Item Name,Stock Group,Godown,Units,Closing Quantity,Closing Rate,Closing Value,Batch,Mfg Date,Expiry Date
+Amul Taza Milk 500ml,Dairy,WH-HYD-01,PCS,240,26,6240,B2409A,01-09-2026,20-10-2026
+Paracetamol 500mg Strip,Pharma,WH-HYD-01,STRIP,1500,9.5,14250,PCM1123,01-03-2025,31-03-2027
+Britannia Bread 400g,Bakery,WH-HYD-02,PCS,60,32,1920,,,05-04-2026
+Tata Salt 1kg,Grocery,WH-VJA-01,KG,120,21,2520,,,
+Heritage Curd 200g,Dairy,WH-HYD-01,PCS,80,18,1440,HC0401,01-04-2026,10-04-2026`;
+
+/* ---------- Globalization: regions (formats) and languages (UI) ---------- */
+const REGIONS = {
+  "en-IN":{name:"India (en-IN)",date:"DMY",num:"indian",cur:"INR",sym:"₹",tz:"Asia/Kolkata",fy:"April"},
+  "en-AE":{name:"UAE / GCC (en-AE)",date:"DMY",num:"dot",cur:"AED",sym:"د.إ",tz:"Asia/Dubai",fy:"January"},
+  "en-GB":{name:"United Kingdom (en-GB)",date:"DMY",num:"dot",cur:"GBP",sym:"£",tz:"Europe/London",fy:"April"},
+  "en-US":{name:"United States (en-US)",date:"MDY",num:"dot",cur:"USD",sym:"$",tz:"America/New_York",fy:"January"},
+  "de-DE":{name:"Germany (de-DE)",date:"DMY",num:"comma",cur:"EUR",sym:"€",tz:"Europe/Berlin",fy:"January"},
+  "fr-FR":{name:"France (fr-FR)",date:"DMY",num:"space",cur:"EUR",sym:"€",tz:"Europe/Paris",fy:"January"},
+  "ar-SA":{name:"Saudi Arabia (ar-SA)",date:"DMY",num:"dot",cur:"SAR",sym:"﷼",tz:"Asia/Riyadh",fy:"January"},
+  "en-SG":{name:"Singapore (en-SG)",date:"DMY",num:"dot",cur:"SGD",sym:"S$",tz:"Asia/Singapore",fy:"January"},
+  "en-AU":{name:"Australia (en-AU)",date:"DMY",num:"dot",cur:"AUD",sym:"A$",tz:"Australia/Sydney",fy:"July"},
+  "ja-JP":{name:"Japan (ja-JP)",date:"YMD",num:"dot",cur:"JPY",sym:"¥",tz:"Asia/Tokyo",fy:"April"}
+};
+const I18N = {
+  en:{_name:"English",_dir:"ltr",importType:"Import type",branch:"Branch context",region:"Region / formats",language:"Language",delimiter:"Delimiter",encoding:"Encoding",srcDateFmt:"Source date format",srcNumFmt:"Source number format",globTitle:"Globalization & date storage",dateConv:"Date & number conversion",
+    steps:["Source","Preview","Mapping","Suppliers","Master mapping","Validation","Confirm","Import","Result"],back:"← Back",next:"Continue →",start:"Start import",viewResult:"View result →",newImport:"New import",stepOf:"Step {a} of {b}",
+    h1:"Where is the data coming from?",h2:"Preview",h3:"Field mapping",h4:"Suppliers",h5:"Master mapping",h6:"Validation",h7:"Confirm import",h8:"Importing",h9:"Import completed",
+    total:"Total records",valid:"Valid",warnings:"Warnings",errors:"Errors",clean:"Clean",rowsChecked:"Rows checked",newMasters:"New masters",updates:"Updates to existing",skipped:"Skipped records",willImport:"Will be imported",processed:"Records processed",successful:"Successful",failed:"Failed",skippedS:"Skipped",mastersCreated:"Masters created",columns:"Columns detected",types:"Data types",file:"File"},
+  hi:{_name:"हिन्दी",_dir:"ltr",importType:"इम्पोर्ट प्रकार",branch:"शाखा",region:"क्षेत्र / फ़ॉर्मैट",language:"भाषा",delimiter:"विभाजक",encoding:"एन्कोडिंग",srcDateFmt:"स्रोत दिनांक फ़ॉर्मैट",srcNumFmt:"स्रोत संख्या फ़ॉर्मैट",globTitle:"वैश्वीकरण और दिनांक संग्रहण",dateConv:"दिनांक और संख्या रूपांतरण",
+    steps:["स्रोत","पूर्वावलोकन","मैपिंग","आपूर्तिकर्ता","मास्टर मैपिंग","सत्यापन","पुष्टि","इम्पोर्ट","परिणाम"],back:"← पीछे",next:"आगे →",start:"इम्पोर्ट शुरू करें",viewResult:"परिणाम देखें →",newImport:"नया इम्पोर्ट",stepOf:"चरण {a} / {b}",
+    h1:"डेटा कहाँ से आ रहा है?",h2:"पूर्वावलोकन",h3:"फ़ील्ड मैपिंग",h4:"आपूर्तिकर्ता",h5:"मास्टर मैपिंग",h6:"सत्यापन",h7:"इम्पोर्ट की पुष्टि",h8:"इम्पोर्ट हो रहा है",h9:"इम्पोर्ट पूर्ण",
+    total:"कुल रिकॉर्ड",valid:"मान्य",warnings:"चेतावनियाँ",errors:"त्रुटियाँ",clean:"स्वच्छ",rowsChecked:"जाँची गई पंक्तियाँ",newMasters:"नए मास्टर",updates:"मौजूदा में अपडेट",skipped:"छोड़े गए रिकॉर्ड",willImport:"इम्पोर्ट होंगे",processed:"संसाधित रिकॉर्ड",successful:"सफल",failed:"विफल",skippedS:"छोड़े गए",mastersCreated:"बनाए गए मास्टर",columns:"पहचाने गए कॉलम",types:"डेटा प्रकार",file:"फ़ाइल"},
+  te:{_name:"తెలుగు",_dir:"ltr",importType:"ఇంపోర్ట్ రకం",branch:"బ్రాంచ్",region:"ప్రాంతం / ఫార్మాట్",language:"భాష",delimiter:"డీలిమిటర్",encoding:"ఎన్‌కోడింగ్",srcDateFmt:"మూల తేదీ ఫార్మాట్",srcNumFmt:"మూల సంఖ్య ఫార్మాట్",globTitle:"గ్లోబలైజేషన్ & తేదీ నిల్వ",dateConv:"తేదీ & సంఖ్య మార్పిడి",
+    steps:["మూలం","ప్రివ్యూ","మ్యాపింగ్","సరఫరాదారులు","మాస్టర్ మ్యాపింగ్","ధృవీకరణ","నిర్ధారణ","ఇంపోర్ట్","ఫలితం"],back:"← వెనుకకు",next:"కొనసాగించు →",start:"ఇంపోర్ట్ ప్రారంభించు",viewResult:"ఫలితం చూడు →",newImport:"కొత్త ఇంపోర్ట్",stepOf:"దశ {a} / {b}",
+    h1:"డేటా ఎక్కడి నుంచి వస్తోంది?",h2:"ప్రివ్యూ",h3:"ఫీల్డ్ మ్యాపింగ్",h4:"సరఫరాదారులు",h5:"మాస్టర్ మ్యాపింగ్",h6:"ధృవీకరణ",h7:"ఇంపోర్ట్ నిర్ధారణ",h8:"ఇంపోర్ట్ అవుతోంది",h9:"ఇంపోర్ట్ పూర్తయింది",
+    total:"మొత్తం రికార్డులు",valid:"చెల్లుబాటు",warnings:"హెచ్చరికలు",errors:"లోపాలు",clean:"శుభ్రం",rowsChecked:"తనిఖీ చేసిన వరుసలు",newMasters:"కొత్త మాస్టర్లు",updates:"ఉన్నవాటికి అప్‌డేట్లు",skipped:"దాటవేసిన రికార్డులు",willImport:"ఇంపోర్ట్ అవుతాయి",processed:"ప్రాసెస్ అయినవి",successful:"విజయవంతం",failed:"విఫలం",skippedS:"దాటవేసినవి",mastersCreated:"సృష్టించిన మాస్టర్లు",columns:"గుర్తించిన కాలమ్‌లు",types:"డేటా రకాలు",file:"ఫైల్"},
+  de:{_name:"Deutsch",_dir:"ltr",importType:"Importtyp",branch:"Filiale",region:"Region / Formate",language:"Sprache",delimiter:"Trennzeichen",encoding:"Zeichensatz",srcDateFmt:"Datumsformat der Quelle",srcNumFmt:"Zahlenformat der Quelle",globTitle:"Globalisierung & Datumsspeicherung",dateConv:"Datums- & Zahlenumwandlung",
+    steps:["Quelle","Vorschau","Zuordnung","Lieferanten","Stammdaten","Prüfung","Bestätigen","Import","Ergebnis"],back:"← Zurück",next:"Weiter →",start:"Import starten",viewResult:"Ergebnis →",newImport:"Neuer Import",stepOf:"Schritt {a} von {b}",
+    h1:"Woher kommen die Daten?",h2:"Vorschau",h3:"Feldzuordnung",h4:"Lieferanten",h5:"Stammdatenzuordnung",h6:"Prüfung",h7:"Import bestätigen",h8:"Import läuft",h9:"Import abgeschlossen",
+    total:"Datensätze gesamt",valid:"Gültig",warnings:"Warnungen",errors:"Fehler",clean:"Fehlerfrei",rowsChecked:"Geprüfte Zeilen",newMasters:"Neue Stammdaten",updates:"Aktualisierungen",skipped:"Übersprungen",willImport:"Werden importiert",processed:"Verarbeitet",successful:"Erfolgreich",failed:"Fehlgeschlagen",skippedS:"Übersprungen",mastersCreated:"Stammdaten angelegt",columns:"Erkannte Spalten",types:"Datentypen",file:"Datei"},
+  ar:{_name:"العربية",_dir:"rtl",importType:"نوع الاستيراد",branch:"الفرع",region:"المنطقة / التنسيقات",language:"اللغة",delimiter:"الفاصل",encoding:"الترميز",srcDateFmt:"تنسيق تاريخ المصدر",srcNumFmt:"تنسيق أرقام المصدر",globTitle:"العولمة وتخزين التاريخ",dateConv:"تحويل التاريخ والأرقام",
+    steps:["المصدر","معاينة","الربط","الموردون","ربط البيانات الرئيسية","التحقق","تأكيد","استيراد","النتيجة"],back:"→ رجوع",next:"← متابعة",start:"بدء الاستيراد",viewResult:"← عرض النتيجة",newImport:"استيراد جديد",stepOf:"الخطوة {a} من {b}",
+    h1:"من أين تأتي البيانات؟",h2:"معاينة",h3:"ربط الحقول",h4:"الموردون",h5:"ربط البيانات الرئيسية",h6:"التحقق",h7:"تأكيد الاستيراد",h8:"جارٍ الاستيراد",h9:"اكتمل الاستيراد",
+    total:"إجمالي السجلات",valid:"صالح",warnings:"تحذيرات",errors:"أخطاء",clean:"سليم",rowsChecked:"الصفوف المفحوصة",newMasters:"بيانات رئيسية جديدة",updates:"تحديثات",skipped:"سجلات متجاوزة",willImport:"سيتم استيرادها",processed:"تمت معالجتها",successful:"ناجح",failed:"فشل",skippedS:"متجاوز",mastersCreated:"بيانات رئيسية أُنشئت",columns:"الأعمدة المكتشفة",types:"أنواع البيانات",file:"الملف"}
+};
+const G = { region:"en-IN", lang:"en" };
+function T(k,vars){let s=(I18N[G.lang]&&I18N[G.lang][k])??I18N.en[k]??k;if(vars)Object.entries(vars).forEach(([a,b])=>s=s.replace("{"+a+"}",b));return s}
+const regionOf=()=>REGIONS[G.region];
+function dateOrder(){const v=$("#srcDateFmt").value;return v==="auto"?regionOf().date:v}
+function numStyle(){const v=$("#srcNumFmt").value;return v==="auto"?regionOf().num:v}
+
+/* ---------- HBS date engine (mirrors dbo.englishHBS / dbo.ConvertHBSDate) ---------- */
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const HBS={
+  /* englishHBS: (year-1950)*416 + month*32 + day */
+  toInt(d){return d?(d.getUTCFullYear()-1950)*416+(d.getUTCMonth()+1)*32+d.getUTCDate():null},
+  /* inverse of ConvertHBSDate: year = n/416+1950, month = (n%416)/32, day = (n%416)%32 */
+  fromInt(n){n=Number(n);if(!Number.isInteger(n)||n<32)return null;const y=Math.floor(n/416)+1950,m=Math.floor((n%416)/32),d=(n%416)%32;return mkDate(y,m,d)},
+  isPlausible(n){n=Number(n);if(!Number.isInteger(n))return false;const d=HBS.fromInt(n);if(!d)return false;const y=d.getUTCFullYear();return y>=1980&&y<=2099},
+  /* ConvertHBSDate output: dd-Mon-yyyy */
+  display(n){const d=HBS.fromInt(n);return d?String(d.getUTCDate()).padStart(2,"0")+"-"+MON[d.getUTCMonth()]+"-"+d.getUTCFullYear():""}
+};
+function mkDate(y,mo,d){if(!(y>=1900&&mo>=1&&mo<=12&&d>=1&&d<=31))return null;const dt=new Date(Date.UTC(y,mo-1,d));return(dt.getUTCFullYear()===y&&dt.getUTCMonth()===mo-1&&dt.getUTCDate()===d)?dt:null}
+const iso=d=>d?d.toISOString().slice(0,10):"";
+/* Locale-aware parsing: returns Date (UTC midnight) or null. Honors source format + region. */
+const AR_DIGITS={"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9","۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9"};
+const latinDigits=s=>String(s).replace(/[٠-٩۰-۹]/g,c=>AR_DIGITS[c]);
+function parseDate(v){
+  if(v==null)return null;v=latinDigits(String(v).trim());if(!v)return null;
+  const fmt=dateOrder();
+  if(fmt==="HBS"||(/^\d{4,5}$/.test(v)&&fmt!=="EXCEL"&&HBS.isPlausible(v)&&!/^(19|20)\d{2}$/.test(v)))return HBS.fromInt(v);
+  if(fmt==="EXCEL"&&/^\d{4,6}$/.test(v)){return new Date(Date.UTC(1899,11,30)+Number(v)*864e5)}
+  let m;
+  if((m=v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[T ].*)?$/)))return mkDate(+m[1],+m[2],+m[3]);
+  if((m=v.match(/^(\d{1,2})[-\/. ]([A-Za-z]{3,9})[-\/. ](\d{2,4})$/))){const mi=MON.findIndex(x=>m[2].toLowerCase().startsWith(x.toLowerCase()));let y=+m[3];if(y<100)y+=2000;return mi<0?null:mkDate(y,mi+1,+m[1])}
+  if((m=v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/))){let y=+m[3];if(y<100)y+=2000;const a=+m[1],b=+m[2];
+    if(fmt==="MDY")return mkDate(y,a,b)||(a>12?mkDate(y,b,a):null);
+    return mkDate(y,b,a)||(b>12?mkDate(y,a,b):null)}
+  return null;
+}
+function parseNum(v){
+  if(v==null)return NaN;v=latinDigits(String(v).trim()).replace(/[₹$€£¥﷼]|Rs\.?|S\$|A\$|د\.إ/g,"").trim();if(v==="")return NaN;
+  const st=numStyle();
+  if(st==="comma"){v=v.replace(/\./g,"").replace(/\s/g,"").replace(",",".")}
+  else if(st==="space"){v=v.replace(/\s| | /g,"").replace(",",".")}
+  else{v=v.replace(/,/g,"").replace(/\s/g,"")}
+  if(/^\(.*\)$/.test(v))v="-"+v.slice(1,-1);
+  return /^-?\d+(\.\d+)?$/.test(v)?Number(v):NaN;
+}
+function fmtNum(n,opts){try{return Number(n).toLocaleString(G.region,opts)}catch(e){return String(n)}}
+function fmtDate(d){if(!d)return"—";try{return d.toLocaleDateString(G.region,{timeZone:"UTC",day:"2-digit",month:"short",year:"numeric"})}catch(e){return iso(d)}}
+
+/* ---------- State ---------- */
+const S = {
+  step:1, maxStep:1, importType:"stock", source:"file",
+  file:null, rawText:"", columns:[], rows:[], colStats:[],
+  mapping:{}, transforms:{}, defaults:{}, masterMap:{}, validation:null, dbMode:"fresh", profile:null, sup:{mode:"column",rows:[],cols:[],map:{},file:null},
+  imp:{running:false,paused:false,cancelled:false,i:0,ok:0,fail:0,skip:0,log:[],timer:null,batch:""},
+  result:null
+};
+const STEPS=["Source","Preview","Mapping","Suppliers","Master mapping","Validation","Confirm","Import","Result"];
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const fmt=n=>fmtNum(n);
+const toastEl=$("#toast"); let toastT;
+function toast(m){toastEl.textContent=m;toastEl.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove("show"),2200)}
+const schema=()=>IMPORT_TYPES[S.importType];
+
+/* ---------- Header selects ---------- */
+const itSel=$("#importType");
+Object.entries(IMPORT_TYPES).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=v.label;itSel.appendChild(o)});
+itSel.value=S.importType;
+itSel.addEventListener("change",()=>{S.importType=itSel.value;S.mapping={};S.transforms={};S.defaults={};S.masterMap={};S.validation=null;S.maxStep=Math.min(S.maxStep,2);if(S.step>2)go(2);else render();toast("Import type set to "+schema().label)});
+const brSel=$("#branchCtx");MASTER_TABLES.BranchMaster.rows.forEach(r=>{const o=document.createElement("option");o.value=r[0];o.textContent=`${r[1]} [${r[0]}]`;brSel.appendChild(o)});brSel.value="BMS10004";
+const rgSel=$("#regionSel");Object.entries(REGIONS).forEach(([k,r])=>{const o=document.createElement("option");o.value=k;o.textContent=r.name;rgSel.appendChild(o)});rgSel.value=G.region;
+const lgSel=$("#langSel");Object.entries(I18N).forEach(([k,l])=>{const o=document.createElement("option");o.value=k;o.textContent=l._name;lgSel.appendChild(o)});lgSel.value=G.lang;
+try{const saved=JSON.parse(localStorage.getItem("rc_import_locale")||"{}");if(REGIONS[saved.region]){G.region=saved.region;rgSel.value=saved.region}if(I18N[saved.lang]){G.lang=saved.lang;lgSel.value=saved.lang}}catch(e){}
+function saveLocale(){try{localStorage.setItem("rc_import_locale",JSON.stringify(G))}catch(e){}}
+rgSel.addEventListener("change",()=>{G.region=rgSel.value;saveLocale();if(S.rawText)parse();S.validation=null;render();toast("Formats: "+regionOf().name)});
+lgSel.addEventListener("change",()=>{G.lang=lgSel.value;saveLocale();applyI18n();render()});
+function applyI18n(){
+  document.documentElement.lang=G.lang;document.documentElement.dir=I18N[G.lang]._dir;
+  $$("[data-i18n]").forEach(el=>{el.textContent=T(el.dataset.i18n)});
+  for(let i=1;i<=9;i++){const h=document.querySelector(`.panel[data-step="${i}"] h2`);if(h&&i!==9)h.textContent=T("h"+i)}
+}
+function renderGlob(){
+  const r=regionOf();const dOrd=dateOrder(),nSt=numStyle();
+  const dEx={DMY:"31/03/2026",MDY:"03/31/2026",YMD:"2026-03-31",DMMMY:"31-Mar-2026",HBS:"31711",EXCEL:"46112"}[dOrd];
+  const nEx={dot:"1,234,567.89",comma:"1.234.567,89",space:"1 234 567,89",indian:"12,34,567.89"}[nSt];
+  $("#globPill").textContent=G.region+" · "+I18N[G.lang]._name;
+  $("#globKv").innerHTML=[["Region",r.name],["Date input",`${dOrd} · e.g. <span class="mono">${dEx}</span>`],["Number input",`<span class="mono">${nEx}</span>`],["Currency",`${r.cur} (${r.sym})`],["Time zone",r.tz],["Financial year starts",r.fy],["Stored as","HBS integer, UTC-free (date only)"]].map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("");
+  const d=$("#hbsTry").value?parseDate($("#hbsTry").value):null;const n=HBS.toInt(d);
+  $("#hbsOut").textContent=d?`englishHBS → ${n}  ·  ConvertHBSDate(${n}) → ${HBS.display(n)}`:"pick a date to see its HBS value";
+}
+$("#hbsTry").addEventListener("input",renderGlob);
+$("#srcDateFmt").addEventListener("change",()=>{if(S.rawText)parse();S.validation=null;render()});
+$("#srcNumFmt").addEventListener("change",()=>{if(S.rawText)parse();S.validation=null;render()});
+
+/* ---------- Stepper ---------- */
+function renderStepper(){
+  const ol=$("#steps");ol.innerHTML="";
+  const names=T("steps");
+  STEPS.forEach((n,i)=>{const s=i+1;const li=document.createElement("li");li.className=s<S.step?"done":s===S.step?"current":"";
+    const dis=s>S.maxStep||(S.imp.running&&s!==8);
+    li.innerHTML=`<button class="step-btn" type="button" ${dis?"disabled":""} data-go="${s}"><span class="dot">${s<S.step?"✓":s}</span><span class="step-lab">${esc(names[i])}</span></button>`;ol.appendChild(li)});
+  $("#scLab").textContent=T("stepOf",{a:S.step,b:9});$("#scName").textContent=names[S.step-1];$("#scBar").style.width=(S.step/9*100)+"%";
+}
+$("#steps").addEventListener("click",e=>{const b=e.target.closest("[data-go]");if(b&&!b.disabled)go(+b.dataset.go)});
+
+/* ---------- Navigation ---------- */
+function go(n){S.step=n;S.maxStep=Math.max(S.maxStep,n);render();window.scrollTo({top:0,behavior:"instant"})}
+function render(){
+  $$(".panel").forEach(p=>p.classList.toggle("active",+p.dataset.step===S.step));
+  renderStepper();
+  const back=$("#backBtn"),next=$("#nextBtn"),st=$("#navStatus");
+  back.disabled=S.step===1||S.imp.running;
+  let can=true,msg="",label=T("next");back.textContent=T("back");
+  switch(S.step){
+    case 1:renderSource();renderGlob();can=!!S.rows.length;msg=can?`${fmt(S.rows.length)} rows loaded from ${S.file?S.file.name:S.source}`:"Load a file or test a connection to continue";break;
+    case 2:renderPreview();msg=`${S.columns.length} columns · ${fmt(S.rows.length)} records`;break;
+    case 3:renderMapping();{const miss=missingRequired();can=!miss.length;msg=can?"All required fields mapped":`${miss.length} required field${miss.length>1?"s":""} unmapped`;}break;
+    case 4:renderSuppliers();{const r=supplierReady();can=r.ok;msg=r.msg;}break;
+    case 5:renderMasters();{const u=unresolvedMasters();can=!u;msg=can?"All master values resolved":`${u} master value${u>1?"s":""} unresolved`;}break;
+    case 6:if(!S.validation)runValidation();renderValidation();{const v=S.validation;can=v.ok+v.warn>0||$("#skipErrors").checked&&v.ok+v.warn>0;msg=`${v.err} errors · ${v.warn} warnings · ${v.ok} clean`;if(!(v.ok+v.warn)){can=false;msg="No importable rows. Fix the source and re-run."}}break;
+    case 7:renderConfirm();can=$("#confirmChk").checked;label=T("start");msg=can?"Ready to import":"Tick the confirmation to enable Start";break;
+    case 8:can=!S.imp.running&&S.imp.i>0;label=T("viewResult");msg=S.imp.running?"Import in progress":"Import finished";break;
+    case 9:renderResult();label=T("newImport");msg="Batch "+S.imp.batch;break;
+  }
+  next.disabled=!can;next.textContent=label;st.textContent=msg;
+}
+$("#backBtn").addEventListener("click",()=>{if(S.step>1)go(S.step-1)});
+$("#nextBtn").addEventListener("click",()=>{
+  if(S.step===4){applySupplierDefaults();S.masterMap={};buildMasterMap();}
+  if(S.step===5){S.validation=null;}
+  if(S.step===7){go(8);startImport();return}
+  if(S.step===9){resetAll();return}
+  go(S.step+1);
+});
+function resetAll(){Object.assign(S,{step:1,maxStep:1,file:null,rawText:"",columns:[],rows:[],colStats:[],mapping:{},transforms:{},masterMap:{},validation:null,result:null,imp:{running:false,paused:false,cancelled:false,i:0,ok:0,fail:0,skip:0,log:[],timer:null,batch:""}});$("#fileChip").hidden=true;$("#fileInput").value="";$("#confirmChk").checked=false;render()}
+
+/* ---------- STEP 1: Source ---------- */
+const SOURCES=[
+  {id:"file",t:"Upload Excel / CSV",d:"Drag a file exported from Excel, Google Sheets or any system.",ic:`<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h8"/>`},
+  {id:"api",t:"API",d:"Pull records from a REST endpoint with token or key auth.",ic:`<path d="M4 12h4m8 0h4M8 12a4 4 0 0 1 8 0 4 4 0 0 1-8 0z"/>`},
+  {id:"db",t:"Database",d:"Run a query against MS SQL, MySQL, PostgreSQL or Oracle.",ic:`<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>`},
+  {id:"legacy",t:"Previous ERP export",d:"Tally, Marg, Busy, GoFrugal and others with pre-built mappings.",ic:`<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>`},
+  {id:"rc",t:"RetailCLIQ → RetailCLIQ",d:"Move opening stock and masters from a running RetailCLIQ database into this one.",ic:`<rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/><path d="M10 12h4m-2-2 2 2-2 2"/>`}
+];
+const RC_QUERY=`select '' as SlNo, (Case when A.OEMCode <> '' Then A.OEMCode else A.Itemcode end) as OEMCode, Upper(A.Itemdesc) as ItemDescription,
+  A.CurQty as Qty, A.Prate as PurchasePrice, F.MRP as MRP, F.dis_value as Discount, F.dis_type as DisType, F.S_std_Price as DiscountPrice,
+  Upper(DivName) as Division, Upper(SDMName) as Department, Upper(A.CatName) as Category, Upper(A.SCMName) as SubCategory,
+  Upper(A.StyleName) as Style, Upper(A.DesName) as Design, Upper(A.SizeOfDress) as Size, Upper(A.ColorName) as Color, Upper(A.BrandName) as Brand,
+  A.HSNCOde as Verticle1, Upper(A.Verticle2) as Verticle2, Upper(A.Verticle3) as Verticle3,
+  D.Tax_per as InTax, D.Tax_Type_Inc_Exl as InTaxtype, E.Tax_per as OutTax, E.Tax_Type_Inc_Exl as OutTaxtype,
+  '' as BatchNo, '' as PackedDate, '' as ExpiryDate, Upper(A.PartyName) as SupplierName,
+  '0' as [Purchase Discount], 'A' as [Purchase Discount Type], A.HSNCOde as HSNCODE, '' as WSP
+from Itemproperties A
+  Inner Join Itemmaster B   on A.Itemcode = B.Itemcode
+  Inner Join Price_Master C on A.Itemcode = C.Itemcode
+  Inner Join Tax_Master D   on C.Desc3 = D.Tax_uid
+  Inner Join Tax_Master E   on A.Tax_Uid = E.Tax_Uid
+  Inner Join Price_Master F on F.Itemcode = A.Itemcode and A.status = 'A'
+where A.CompId = @CompId /* and A.BranchId = @BranchId */ /* and A.CurQty <> 0 */`;
+const SAMPLE_RC=`SlNo,OEMCode,ItemDescription,Qty,PurchasePrice,MRP,Discount,DisType,DiscountPrice,Division,Department,Category,SubCategory,Style,Design,Size,Color,Brand,Verticle1,Verticle2,Verticle3,InTax,InTaxtype,OutTax,OutTaxtype,BatchNo,PackedDate,ExpiryDate,SupplierName,Purchase Discount,Purchase Discount Type,HSNCODE,WSP
+,RAY-SH-1001,RAYMOND FORMAL SHIRT WHITE,24,899.00,1499.00,10,P,1349.10,APPAREL,MENS,APPAREL,SHIRTS,SLIM FIT,PLAIN,M,WHITE,RAYMOND,62052000,SS26,,5,E,5,I,,,,RAYMOND APPAREL,0,A,62052000,
+,RAY-TR-2001,RAYMOND TROUSER GREY,12,1250.00,1999.00,15,P,1699.15,APPAREL,MENS,APPAREL,TROUSERS,REGULAR,PLAIN,34,GREY,RAYMOND,62034200,SS26,,5,E,5,I,,,,RAYMOND APPAREL,0,A,62034200,
+,SAR-KAN-01,KANCHIPURAM SILK SAREE,6,4200.00,6999.00,5,P,6649.05,APPAREL,WOMENS,APPAREL,SAREES,REGULAR,CHECKS,FREE,RED,GENERIC,50071000,,,5,E,5,I,,,,SRI LAKSHMI TRADERS,0,A,50071000,
+,AMUL-TM-500,AMUL TAZA MILK 500ML,240,26.00,28.00,0,A,28.00,FOOD,FMCG,DAIRY,MILK,,,,,AMUL,04011000,,,0,E,0,I,B2409A,,20-10-2026,HERITAGE FOODS,0,A,04011000,
+,CIP-PCM-500,PARACETAMOL 500MG STRIP,1500,9.50,14.00,0,A,14.00,PHARMA,OTC,PHARMA,TABLETS,,,,,CIPLA,30049099,,,12,E,12,I,PCM1123,,31-03-2027,MEDPLUS DISTRIBUTORS,0,A,30049099,
+,TATA-SALT-1,TATA SALT 1KG,0,21.00,25.00,0,A,25.00,FOOD,FMCG,GROCERY,,,,,,TATA,25010020,,,0,E,0,I,,,,SRI LAKSHMI TRADERS,0,A,25010020,
+,HER-CURD-200,HERITAGE CURD 200G,80,18.00,20.00,0,A,20.00,FOOD,FMCG,DAIRY,,,,,,HERITAGE,04031000,,,0,E,0,I,HC0401,,10-04-2026,HERITAGE FOODS,0,A,04031000,`;
+const LEGACY_SAMPLES={
+"Tally Prime":`Stock Item Name,Stock Group,Godown,Units,Closing Quantity,Closing Rate,Closing Value,Batch,Mfg Date,Expiry Date
+Amul Taza Milk 500ml,Dairy,WH-HYD-01,PCS,240,26,6240,B2409A,01-09-2026,20-10-2026
+Paracetamol 500mg Strip,Pharma,WH-HYD-01,STRIP,1500,9.5,14250,PCM1123,01-03-2025,31-03-2027
+Britannia Bread 400g,Bakery,WH-HYD-02,PCS,60,32,1920,,,05-04-2026
+Tata Salt 1kg,Grocery,WH-VJA-01,KG,120,21,2520,,,
+Heritage Curd 200g,Dairy,WH-HYD-01,PCS,80,18,1440,HC0401,01-04-2026,10-04-2026`,
+"Marg ERP":`Item Name,Company,Batch No,Expiry,Qty,Unit,P.Rate,MRP,HSN,GST%,Supplier
+PARACETAMOL 500MG STRIP,CIPLA,PCM1123,03/27,1500,STRIP,9.50,14.00,30049099,12,MEDPLUS DISTRIBUTORS
+CIPLA AZITHRO 500 TAB,CIPLA,AZ2210,02/26,300,STRIP,42.00,68.00,30042099,12,MEDPLUS DISTRIBUTORS
+VOLINI GEL 60G,SUN PHARMA,VL8821,01/27,90,PCS,110.00,145.00,30049011,12,MEDPLUS DISTRIBUTORS
+DETTOL LIQUID 250ML,RECKITT,DL2401,12/27,45,PCS,98.00,115.00,38089400,18,METRO CASH & CARRY`,
+"Busy":`Item Name,Item Group,Unit,Op. Qty,Op. Rate,MRP,HSN Code,Tax Category,Party
+TATA SALT 1KG,GROCERY,KG,120,21.00,25.00,25010020,GST 0%,SRI LAKSHMI TRADERS
+SURF EXCEL 1KG,HOUSEHOLD,KG,40,145.00,160.00,34022010,GST 18%,SRI LAKSHMI TRADERS
+DAAWAT BASMATI 5KG,GROCERY,BAG,30,620.00,699.00,10063020,GST 5%,SRI LAKSHMI TRADERS
+NESTLE MAGGI 70G,GROCERY,PKT,360,12.50,14.00,19023010,GST 18%,SRI LAKSHMI TRADERS`,
+"Wondersoft Shoper":`SKU,Article,Dept,Category,Sub Category,Brand,Size,Colour,Qty,Cost Price,MRP,Supplier,Season
+RAY-SH-1001,RAYMOND FORMAL SHIRT,MENS,APPAREL,SHIRTS,RAYMOND,M,WHITE,12,899.00,1499.00,RAYMOND APPAREL,SS26
+RAY-SH-1001,RAYMOND FORMAL SHIRT,MENS,APPAREL,SHIRTS,RAYMOND,L,WHITE,8,899.00,1499.00,RAYMOND APPAREL,SS26
+RAY-SH-1001,RAYMOND FORMAL SHIRT,MENS,APPAREL,SHIRTS,RAYMOND,XL,WHITE,4,899.00,1499.00,RAYMOND APPAREL,SS26
+RAY-SH-1002,RAYMOND FORMAL SHIRT,MENS,APPAREL,SHIRTS,RAYMOND,M,BLUE,10,899.00,1499.00,RAYMOND APPAREL,SS26
+RAY-SH-1002,RAYMOND FORMAL SHIRT,MENS,APPAREL,SHIRTS,RAYMOND,L,BLUE,8,899.00,1499.00,RAYMOND APPAREL,SS26
+RAY-TR-2001,RAYMOND TROUSER,MENS,APPAREL,TROUSERS,RAYMOND,34,GREY,12,1250.00,1999.00,RAYMOND APPAREL,SS26
+SAR-KAN-01,KANCHIPURAM SILK SAREE,WOMENS,APPAREL,SAREES,GENERIC,FREE,RED,6,4200.00,6999.00,SRI LAKSHMI TRADERS,`,
+"GoFrugal":`ItemCode,ItemName,Category,Brand,UOM,Stock,PurchasePrice,SellingPrice,MRP,HSN,Tax,Vendor
+10001,AMUL TAZA MILK 500ML,DAIRY,AMUL,PCS,240,26.00,27.00,28.00,04011000,0,HERITAGE FOODS
+10003,BRITANNIA BREAD 400G,BAKERY,BRITANNIA,PCS,60,32.00,38.00,40.00,19052000,0,METRO CASH & CARRY
+10007,LAYS CLASSIC 52G,GROCERY,PEPSICO,PKT,200,15.00,19.00,20.00,19059030,12,METRO CASH & CARRY
+10012,PARLE-G 800G,GROCERY,PARLE,PKT,500,56.00,62.00,65.00,19053100,18,SRI LAKSHMI TRADERS`,
+"Logic ERP":`Barcode,Article No,Description,Section,Brand,Size,Shade,Qty,Rate,MRP,Vendor,HSN
+4827030001,RAY-SH-1001,RAYMOND FORMAL SHIRT WHITE,MENS SHIRTS,RAYMOND,M,WHITE,1,899.00,1499.00,RAYMOND APPAREL,62052000
+4827030002,RAY-SH-1001,RAYMOND FORMAL SHIRT WHITE,MENS SHIRTS,RAYMOND,M,WHITE,1,899.00,1499.00,RAYMOND APPAREL,62052000
+4827030003,RAY-SH-1001,RAYMOND FORMAL SHIRT WHITE,MENS SHIRTS,RAYMOND,L,WHITE,1,899.00,1499.00,RAYMOND APPAREL,62052000
+4827030004,RAY-TR-2001,RAYMOND TROUSER GREY,MENS TROUSERS,RAYMOND,34,GREY,1,1250.00,1999.00,RAYMOND APPAREL,62034200`,
+"Other / generic":null};
+const SAMPLE_SUPPLIERS=`Supplier Name,Supplier Code,GSTIN,PAN,Mobile,Email,City,State,PIN,Credit Days,Opening Outstanding,Dr/Cr,As On
+Raymond Apparel,V10005,36AAACR4849R1ZK,AAACR4849R,9848012345,accounts@raymondapparel.in,Hyderabad,Telangana,500081,45,"1,25,400.00",Cr,01/04/2026
+Sri Lakshmi Traders,V10001,37AABCS1234A1Z2,AABCS1234A,9876543210,sales@srilakshmi.co.in,Ongole,Andhra Pradesh,523001,30,"42,350.50",Cr,01/04/2026
+Heritage Foods,V10004,36AAACH1234B1Z9,AAACH1234B,9000011111,dist@heritagefoods.in,Hyderabad,Telangana,500032,15,0,Cr,01/04/2026
+Metro Cash & Carry,V10002,36AAACM1234C1Z7,AAACM1234C,9000022222,b2b@metro.co.in,Hyderabad,Telangana,500084,7,"8,900.00",Dr,01/04/2026
+Medplus Distributors,,36AAACM9876D1Z1,AAACM9876D,9000033333,,Hyderabad,Telangana,500016,21,"17,250.00",Cr,01/04/2026
+Nestle India,,36AAACN1234E1Z5,AAACN1234E,9000044444,trade@nestle.in,Hyderabad,Telangana,500003,30,"3,100.00",Cr,01/04/2026`;
+function renderSource(){
+  const g=$("#srcGrid");if(!g.children.length){SOURCES.forEach(s=>{const b=document.createElement("button");b.type="button";b.className="src";b.dataset.src=s.id;
+    b.innerHTML=`<span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${s.ic}</svg></span><b>${s.t}</b><span class="small muted">${s.d}</span>`;g.appendChild(b)})}
+  $$(".src").forEach(b=>b.classList.toggle("sel",b.dataset.src===S.source));
+  ["file","api","db","legacy","rc"].forEach(k=>$("#src"+k[0].toUpperCase()+k.slice(1)).hidden=S.source!==k);
+  $("#rcQuery").textContent=RC_QUERY.replace("@CompId","'"+($("#rcComp").value||"C001")+"'");
+  $$("[data-dbmode]").forEach(b=>b.classList.toggle("sel",b.dataset.dbmode===S.dbMode));
+  $("#dbModePill").textContent=S.dbMode==="fresh"?"Default: Create new (suppliers from Suppliers step)":"Default: Existing (match by name / alias)";
+}
+$("#srcGrid").addEventListener("click",e=>{const b=e.target.closest(".src");if(!b)return;S.source=b.dataset.src;if(S.source==="rc")S.dbMode="fresh";render()});
+$("#dbModeCard").addEventListener("click",e=>{const b=e.target.closest("[data-dbmode]");if(!b)return;S.dbMode=b.dataset.dbmode;S.masterMap={};S.validation=null;render();toast(S.dbMode==="fresh"?"Fresh DB: unmatched masters will be created":"Running DB: masters matched to existing")});
+$("#rcComp").addEventListener("input",renderSource);
+$("#rcFetch").addEventListener("click",()=>{const m=$("#rcMsg");
+  if(API.on){m.textContent="Extracting from "+(API.health.dbOld||"source DB")+"…";fetch(API.base+"/rc/extract",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({branchId:$("#rcBranch").value.trim(),zero:$("#rcZero").value,status:$("#rcStatus").value})}).then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);m.textContent=`Fetched ${fmt(j.rows.length)} items from ${j.name}`;loadRows(j.columns,j.rows,{name:j.name,type:"retailcliq"});S.sup.mode="column";S.dbMode="fresh";autoMap();$("#applyStdDefaults").click();toast("RetailCLIQ source loaded")}).catch(e=>{m.textContent="Extract failed: "+e.message});return}
+  if(!$("#rcHost").value.trim()||!$("#rcDb").value.trim()){m.textContent="Enter source server and database";return}m.textContent="Connecting…";setTimeout(()=>{m.textContent=`Connected to ${$("#rcDb").value} · 7 items, 9 masters fetched (sample)`;loadText(SAMPLE_RC,{name:$("#rcDb").value+".Itemproperties",size:0,type:"retailcliq"});S.sup.mode="column";autoMap();$("#applyStdDefaults").click();toast("RetailCLIQ source loaded — masters will be copied "+($("#rcCopyMasters").value==="copy"?"as-is":"by name"))},700)});
+const drop=$("#drop");
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)readFile(f)});
+$("#fileInput").addEventListener("change",e=>{const f=e.target.files[0];if(f)readFile(f)});
+$("#legacyFile").addEventListener("change",e=>{const f=e.target.files[0];if(f)readFile(f)});
+$("#loadSample").addEventListener("click",()=>{loadText(SAMPLE_STOCK,{name:"opening_stock_FY2627.csv",size:SAMPLE_STOCK.length,type:"text/csv"});toast("Sample opening stock loaded (18 rows, with deliberate issues)")});
+function legacyLabel(){const sys=$("#legacySys").value;$("#legacySample").textContent=`Use sample ${sys==="Other / generic"?"generic":sys} export`}
+$("#legacySys").addEventListener("change",legacyLabel);legacyLabel();
+$("#legacySample").addEventListener("click",()=>{const sys=$("#legacySys").value;const txt=LEGACY_SAMPLES[sys]||SAMPLE_STOCK;const nm=sys.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_export.csv";loadText(txt,{name:nm,size:txt.length,type:"text/csv"});
+  if(/Shoper|Logic/.test(sys))S.profile="apparel";else if(/Marg/.test(sys))S.profile="pharma";else if(/GoFrugal|Busy/.test(sys))S.profile="fmcg";toast(`Sample ${sys} export loaded`)});
+$("#apiTest").addEventListener("click",()=>{const m=$("#apiMsg");m.textContent="Connecting…";setTimeout(()=>{if(!$("#apiUrl").value.trim()){m.textContent="Enter an endpoint URL first";return}m.textContent="Connected · 18 records available (sample response)";loadText(SAMPLE_STOCK,{name:$("#apiUrl").value.trim(),size:0,type:"application/json"})},700)});
+$("#dbTest").addEventListener("click",()=>{const m=$("#dbMsg");m.textContent="Connecting…";setTimeout(()=>{if(!$("#dbHost").value.trim()){m.textContent="Enter a server/host first";return}m.textContent="Connected · query returned 18 rows (sample)";loadText(SAMPLE_STOCK,{name:($("#dbName").value||"DB")+" query",size:0,type:"sql"})},700)});
+$("#delim").addEventListener("change",()=>{if(S.rawText)parse()});
+$("#firstRowHeader").addEventListener("change",()=>{if(S.rawText)parse();render()});
+
+function readFile(f){
+  if(f.size>512*1024*1024){toast("File is larger than 512 MB");return}
+  if(API.on){const fd=new FormData();fd.append("file",f);toast("Uploading "+f.name+"…");fetch(API.base+"/upload",{method:"POST",body:fd}).then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);loadRows(j.columns,j.rows,{name:j.name,size:j.size,type:f.type});toast(`${fmt(j.rows.length)} rows parsed on the server`)}).catch(e=>toast("Upload failed: "+e.message));return}
+  if(/\.xlsx?$/i.test(f.name)){toast("Excel binary detected. Export the sheet as CSV first (or run the server, which parses .xlsx).")}
+  const r=new FileReader();r.onload=()=>loadText(String(r.result),f);r.onerror=()=>toast("Could not read the file");r.readAsText(f);
+}
+function loadText(text,f){S.file={name:f.name,size:f.size,type:f.type};S.rawText=text;S.mapping={};S.transforms={};S.defaults={};S.masterMap={};S.validation=null;S.maxStep=1;parse();
+  const c=$("#fileChip");c.hidden=false;c.innerHTML=`<span class="filechip">📄 <span>${esc(f.name)}</span> <span class="muted">${f.size?(f.size/1024).toFixed(1)+" KB":""}</span></span>`;render()}
+function detectDelim(t){const line=t.split(/\r?\n/)[0]||"";const c={",":0,";":0,"\t":0,"|":0};for(const ch of line)if(ch in c)c[ch]++;return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]||","}
+function parseCSV(t,d){const rows=[];let row=[],cell="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){cell+='"';i++}else q=false}else cell+=ch}else{if(ch==='"')q=true;else if(ch===d){row.push(cell);cell=""}else if(ch==="\n"){row.push(cell);rows.push(row);row=[];cell=""}else if(ch!=="\r")cell+=ch}}if(cell.length||row.length){row.push(cell);rows.push(row)}return rows.filter(r=>r.some(c=>c.trim()!==""))}
+function parse(){
+  const d=$("#delim").value==="auto"?detectDelim(S.rawText):$("#delim").value;
+  const all=parseCSV(S.rawText,d);if(!all.length){S.columns=[];S.rows=[];return}
+  const hdr=$("#firstRowHeader").checked;
+  S.columns=hdr?all[0].map((c,i)=>c.trim()||`Column ${i+1}`):all[0].map((_,i)=>`Column ${i+1}`);
+  S.rows=(hdr?all.slice(1):all).map((r,ri)=>{const row=S.columns.map((_,i)=>(r[i]??"").trim());row._i=ri;return row});
+  computeStats();
+}
+function loadRows(columns,rows,f){S.file={name:f.name,size:f.size||0,type:f.type||"api"};S.rawText="";S.columns=columns;S.rows=rows.map((r,ri)=>{const row=columns.map((_,i)=>String(r[i]??"").trim());row._i=ri;return row});S.mapping={};S.transforms={};S.defaults={};S.masterMap={};S.validation=null;S.maxStep=1;computeStats();
+  const c=$("#fileChip");c.hidden=false;c.innerHTML=`<span class="filechip">📄 <span>${esc(f.name)}</span> <span class="muted">${fmt(rows.length)} rows</span></span>`;render()}
+function computeStats(){
+  S.colStats=S.columns.map((c,i)=>{const vals=S.rows.map(r=>r[i]);const filled=vals.filter(v=>v!=="");const distinct=new Set(filled).size;return{name:c,type:detectType(filled,c),filled:filled.length,distinct,samples:[...new Set(filled)].slice(0,3)}});
+}
+const DATEISH=/date|dt$|expiry|exp|ason|mfg|dob|valid|from|upto/i;
+function detectType(vals,header){if(!vals.length)return"empty";const t=vals.slice(0,200);const isInt=v=>/^-?\d+$/.test(latinDigits(v));
+  if(t.every(isInt)&&DATEISH.test(norm(header))&&t.every(v=>HBS.isPlausible(v)))return"hbsdate";
+  if(t.every(v=>!isNaN(parseNum(v))))return t.every(isInt)?"integer":"decimal";
+  if(t.every(v=>parseDate(v)!==null))return"date";
+  if(t.filter(v=>parseDate(v)!==null).length>=t.length*0.8)return"date?";
+  if(t.every(v=>/^[A-Z]{2,}-?\d+/.test(v)))return"code";return"text"}
+
+/* ---------- STEP 2: Preview ---------- */
+function renderPreview(){
+  const tiles=$("#previewTiles");const f=S.file||{};const ty=S.colStats.reduce((a,c)=>{a[c.type]=(a[c.type]||0)+1;return a},{});
+  tiles.innerHTML=[["acc",esc(f.name||"—"),T("file")],["info",S.columns.length,T("columns")],["ok",fmt(S.rows.length),T("total")],["info",Object.entries(ty).map(([k,v])=>`${v} ${k}`).join(", ")||"—",T("types")]]
+    .map(([c,v,l])=>`<div class="tile ${c}"><div class="v" style="font-size:${String(v).length>14?"14px":"24px"};word-break:break-word">${v}</div><div class="l">${l}</div></div>`).join("");
+  $("#colCount").textContent=`${S.columns.length} columns`;
+  $("#colTable tbody").innerHTML=S.colStats.map((c,i)=>`<tr><td class="num">${i+1}</td><td><b>${esc(c.name)}</b></td><td><span class="type-tag">${c.type}</span></td><td class="num">${c.filled}/${S.rows.length}</td><td class="num">${c.distinct}</td><td class="muted">${esc(c.samples.join(" · "))}</td></tr>`).join("");
+  $("#sampleTotal").textContent=fmt(S.rows.length);
+  $("#sampleTable thead").innerHTML="<tr><th>#</th>"+S.columns.map(c=>`<th>${esc(c)}</th>`).join("")+"</tr>";
+  $("#sampleTable tbody").innerHTML=S.rows.slice(0,10).map((r,i)=>`<tr><td class="num">${i+1}</td>${r.map((v,j)=>{const ty=S.colStats[j].type;if(!v)return'<td><span class="muted">—</span></td>';
+    if(ty==="hbsdate")return`<td><span class="mono">${esc(v)}</span> <span class="muted small">→ ${HBS.display(v)}</span></td>`;
+    if(ty==="date"||ty==="date?"){const d=parseDate(v);return`<td>${esc(v)} <span class="muted small">→ ${d?"HBS "+HBS.toInt(d):"invalid"}</span></td>`}
+    if(/integer|decimal/.test(ty)){const n=parseNum(v);return`<td class="num" title="${esc(v)}">${isNaN(n)?esc(v):fmtNum(n)}</td>`}
+    return`<td>${esc(v)}</td>`}).join("")}</tr>`).join("");
+}
+
+/* ---------- STEP 3: Mapping ---------- */
+const TRANSFORMS=["None","Trim","UPPERCASE","Title Case","Strip non-digits","Date: force DD/MM/YYYY","Date: force MM/DD/YYYY","Date: HBS int → date","Date: Excel serial → date","Number: 1.234,56 → 1234.56","Multiply ×100","Default if blank"];
+/* Scores: exact column-name or synonym hit = 3, synonym contained = 1. Exact wins over partial across all columns. */
+function autoMap(){const used=new Set();const cand=[];S.columns.forEach((c,i)=>{const n=norm(c);schema().fields.forEach(f=>{const syn=[norm(f.label),norm(f.key),...(f.syn||[])];let s=0;if(syn.includes(n))s=3;else if(syn.some(x=>x.length>2&&(n.includes(x)||x.includes(n))))s=1;if(s)cand.push({i,key:f.key,s})})});
+  cand.sort((a,b)=>b.s-a.s);const usedCols=new Set();cand.forEach(c=>{if(used.has(c.key)||usedCols.has(c.i))return;S.mapping[c.i]=c.key;used.add(c.key);usedCols.add(c.i)})}
+function missingRequired(){return schema().fields.filter(f=>f.req&&!hasSource(f.key))}
+let hlSrc=null;
+function renderMapping(){
+  if(!Object.keys(S.mapping).length)autoMap();
+  const used=Object.values(S.mapping);const miss=missingRequired();
+  if(hlSrc==null||S.mapping[hlSrc])hlSrc=S.columns.findIndex((_,i)=>!S.mapping[i]);
+  const nDef=schema().fields.filter(f=>mappedFieldIndex(f.key)<0&&S.defaults[f.key]).length;
+  $("#mapSummary").innerHTML=`<span class="pill ok">${used.length} mapped</span><span class="pill n">${S.columns.length-used.length} ignored</span><span class="pill info">${nDef} defaulted</span>${miss.length?`<span class="pill err">${miss.length} required missing</span>`:`<span class="pill ok">All required mapped</span>`}<span class="pill info">Target: ${esc(schema().table)}${schema().proc?" → "+esc(schema().proc):""}</span>`;
+  const byTable={};schema().fields.forEach(f=>{(byTable[f.table||schema().table]=byTable[f.table||schema().table]||[]).push(f)});
+  const opts=cur=>Object.entries(byTable).map(([t,fs])=>`<optgroup label="${esc(t)}">${fs.map(f=>`<option value="${f.key}" ${cur===f.key?"selected":""} ${used.includes(f.key)&&cur!==f.key?"disabled":""}>${esc(f.label)}${f.req?" *":""}${f.master?" → "+f.master:""}${f.inferred?" (verify)":""}</option>`).join("")}</optgroup>`).join("");
+  $("#mapRows").innerHTML=S.columns.map((c,i)=>{const st=S.colStats[i];const cur=S.mapping[i]||"";const f=schema().fields.find(x=>x.key===cur);
+    return `<div class="map-row ${i===hlSrc?"hl":""}" data-row="${i}"><div class="src-col"><b>${esc(c)}</b><span class="samp">${st.type} · ${esc(st.samples.slice(0,2).join(", "))||"no data"}</span></div><div class="arrow">→</div>
+    <div class="src-col"><select data-map="${i}" aria-label="Map ${esc(c)}"><option value="">— Ignore this column —</option>${opts(cur)}</select>${f?`<span class="samp">${esc(f.sql||"")}${f.note?" · "+esc(f.note):""}</span>`:""}</div>
+    <div><select data-tr="${i}" aria-label="Transform"${cur?"":" disabled"}>${TRANSFORMS.map(t=>`<option ${S.transforms[i]===t?"selected":""}>${t}</option>`).join("")}</select></div></div>`}).join("");
+  $("#unmappedReq").innerHTML=miss.length?`<span class="small muted" style="align-self:center">Required, still missing — click to map to the highlighted source column, or set a rule below:</span>`+miss.map(f=>`<button type="button" class="chip" data-req="${f.key}">${esc(f.label)}</button>`).join(""):`<span class="pill ok">All required columns have a source or a default</span>`;
+  renderDefaults();
+  renderTplList();renderSchema();renderArt();
+}
+$("#mapRows").addEventListener("change",e=>{const m=e.target.dataset.map,t=e.target.dataset.tr;if(m!=null){if(e.target.value)S.mapping[m]=e.target.value;else delete S.mapping[m];S.masterMap={};S.validation=null;hlSrc=null;render()}if(t!=null){S.transforms[t]=e.target.value;S.validation=null}});
+$("#mapRows").addEventListener("click",e=>{const r=e.target.closest(".map-row");if(r&&!e.target.closest("select")){hlSrc=+r.dataset.row;renderMapping()}});
+$("#unmappedReq").addEventListener("click",e=>{const b=e.target.closest("[data-req]");if(!b)return;if(hlSrc==null||hlSrc<0){toast("Click a source column first, then the target");return}S.mapping[hlSrc]=b.dataset.req;S.masterMap={};S.validation=null;hlSrc=null;render()});
+
+/* ---------- Defaults for unmapped target columns ---------- */
+function renderDefaults(){
+  const showOpt=$("#showOptional").checked;const sample=S.rows[0]||[];
+  const list=schema().fields.filter(f=>(mappedFieldIndex(f.key)<0||(S.defaults[f.key]&&S.defaults[f.key].mode==="compose"&&S.defaults[f.key].override))&&(f.req||showOpt||S.defaults[f.key]));
+  const nOpt=schema().fields.filter(f=>mappedFieldIndex(f.key)<0&&!f.req&&!S.defaults[f.key]).length;
+  $("#showOptional").parentElement.lastChild.textContent=` Show optional columns (${nOpt})`;
+  $("#defRows").innerHTML=list.length?list.map(f=>{const d=S.defaults[f.key]||{mode:f.req?"":"blank"};const val=d.mode?computeDefault(d,sample,f.key):"";
+    let ctl="";
+    if(d.mode==="compose")ctl=`<span class="small muted">Pattern: <span class="mono">${esc(d.value||"")}</span>${d.override?" · overrides file":""} — edit in Article name builder</span>`;
+    else if(d.mode==="const"||d.mode==="expr"||d.mode==="user")ctl=`<input type="text" data-dv="${f.key}" value="${esc(d.value??(d.mode==="user"?"U10001":""))}" placeholder="${d.mode==="expr"?"{Qty}*{PurchasePrice}":d.mode==="user"?"U10001":"value"}">`;
+    else if(d.mode==="master"&&f.master)ctl=`<select data-dv="${f.key}">${(MASTERS[f.master]||[]).map(o=>`<option ${d.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+    else if(d.mode==="master")ctl=`<span class="small muted">Not a master column</span>`;
+    else if(d.mode==="copy")ctl=`<select data-dv="${f.key}"><option value="">— choose source column —</option>${S.columns.map(c=>`<option ${d.value===c?"selected":""}>${esc(c)}</option>`).join("")}</select>`;
+    const prev=d.mode?`<span class="mono small" style="color:var(--accent)">→ ${esc(f.type==="date"&&parseDate(val)?val+" (HBS "+HBS.toInt(parseDate(val))+")":val)||"''"}</span>`:`<span class="pill err">needs a rule</span>`;
+    return`<div class="map-row"><div class="src-col"><b>${esc(f.label)}${f.req?' <span class="req">*</span>':""}</b><span class="samp">${esc(f.table||schema().table)} · ${esc((f.sql||"").split("  ")[0])}${f.note?" · "+esc(f.note):""}</span></div><div class="arrow">←</div>
+      <div><select data-dm="${f.key}" aria-label="Rule for ${esc(f.label)}"><option value="">— choose rule —</option>${DEF_MODES.filter(([m])=>m!=="master"||f.master).map(([m,l])=>`<option value="${m}" ${d.mode===m?"selected":""}>${l}</option>`).join("")}</select></div>
+      <div class="src-col">${ctl}${prev}</div></div>`}).join(""):`<div class="map-row"><span class="small muted">Every target column has a source column.</span></div>`;
+}
+$("#defRows").addEventListener("change",e=>{const m=e.target.dataset.dm,v=e.target.dataset.dv;
+  if(m!=null){if(!e.target.value)delete S.defaults[m];else{const f=schema().fields.find(x=>x.key===m);const d={mode:e.target.value};if(d.mode==="master")d.value=(MASTERS[f.master]||[])[0]||"";if(d.mode==="user")d.value="U10001";S.defaults[m]=d}}
+  if(v!=null&&S.defaults[v]){S.defaults[v].value=e.target.value}
+  S.masterMap={};S.validation=null;render()});
+$("#defRows").addEventListener("input",e=>{const v=e.target.dataset.dv;if(v!=null&&S.defaults[v]&&e.target.tagName==="INPUT"){S.defaults[v].value=e.target.value;S.validation=null}});
+$("#showOptional").addEventListener("change",renderDefaults);
+$("#applyStdDefaults").addEventListener("click",()=>{let n=0;schema().fields.forEach(f=>{if(mappedFieldIndex(f.key)>=0||S.defaults[f.key])return;const d=STD_DEFAULTS[f.key];if(d){const dd=Object.assign({},d);if(dd.mode==="master"&&!(MASTERS[f.master]||[]).includes(dd.value))dd.value=(MASTERS[f.master]||[])[0]||"";if(dd.mode==="copy"){const c=S.columns.find(c=>/desc|name/i.test(c));if(!c)return;dd.value=c}S.defaults[f.key]=dd;n++}else if(f.req){S.defaults[f.key]={mode:"const",value:""};n++}});S.masterMap={};S.validation=null;render();toast(n+" default rules applied")});
+
+/* ---------- Article name builder ---------- */
+function artKey(){return"rc_article_pattern_"+S.importType}
+function renderArt(){
+  const card=$("#artCard");const sc=schema();const has=sc.fields.some(f=>f.key==="ItemDescription"||f.key==="ArtName");card.hidden=!has;if(!has)return;
+  $("#artPresets").innerHTML=Object.keys(ART_PRESETS).map(k=>`<button type="button" class="chip" data-preset="${esc(k)}">${esc(k)}</button>`).join("");
+  $("#artTokens").innerHTML=ART_TOKENS.filter(t=>sc.fields.some(f=>f.key===t)).map(t=>{const ok=hasSource(t);return`<button type="button" class="chip" data-tok="${t}" ${ok?"":'style="opacity:.5" title="No source or default yet"'}>{${t}}</button>`}).join("")+S.columns.filter(c=>!sc.fields.some(f=>f.key===c)).slice(0,8).map(c=>`<button type="button" class="chip" data-tok="${esc(c)}" title="raw source column">{${esc(c)}}</button>`).join("");
+  if(!$("#artTpl").value){try{const sv=JSON.parse(localStorage.getItem(artKey())||"null");if(sv){$("#artTpl").value=sv.value||"";$("#artCase").value=sv.case||"upper";$("#artSep").value=sv.sep??" ";$("#artTarget").value=sv.target||"ItemDescription";$("#artOverride").checked=!!sv.override}}catch(e){}}
+  const act=["ItemDescription","ArtName"].filter(k=>S.defaults[k]&&S.defaults[k].mode==="compose");
+  $("#artStatus").textContent=act.length?`Active on ${act.join(" and ")}${S.defaults[act[0]].override?" (overriding file values)":""}`:"Not applied";
+  artPreview();
+}
+function artPreview(){const d={mode:"compose",value:$("#artTpl").value,case:$("#artCase").value,sep:$("#artSep").value,override:true};const tgt=$("#artTarget").value==="ArtName"?"ArtName":"ItemDescription";
+  $("#artPreview").innerHTML=S.rows.slice(0,4).map(r=>{const n=composeName(d,r,tgt);return`<div>${esc(n)||'<span class="e">(empty — no tokens resolved)</span>'} <span class="muted">· ${n.length} chars</span></div>`}).join("")||"<div class=\"muted\">Load a file to preview</div>"}
+["artTpl","artCase","artSep","artTarget"].forEach(id=>$("#"+id).addEventListener("input",artPreview));
+$("#artPresets").addEventListener("click",e=>{const b=e.target.closest("[data-preset]");if(!b)return;$("#artTpl").value=ART_PRESETS[b.dataset.preset];artPreview()});
+$("#artTokens").addEventListener("click",e=>{const b=e.target.closest("[data-tok]");if(!b)return;const i=$("#artTpl");i.value=(i.value+" {"+b.dataset.tok+"}").trim();artPreview();i.focus()});
+$("#artApply").addEventListener("click",()=>{const tpl=$("#artTpl").value.trim();if(!tpl){toast("Enter a pattern first");return}const d={mode:"compose",value:tpl,case:$("#artCase").value,sep:$("#artSep").value,override:$("#artOverride").checked};const t=$("#artTarget").value;const keys=t==="both"?["ItemDescription","ArtName"]:[t];
+  keys.forEach(k=>{if(schema().fields.some(f=>f.key===k))S.defaults[k]=Object.assign({},d)});try{localStorage.setItem(artKey(),JSON.stringify(Object.assign({target:t},d)))}catch(e){}
+  S.masterMap={};S.validation=null;render();toast(`Article name pattern applied to ${keys.join(" and ")}`)});
+$("#artClear").addEventListener("click",()=>{["ItemDescription","ArtName"].forEach(k=>{if(S.defaults[k]&&S.defaults[k].mode==="compose")delete S.defaults[k]});try{localStorage.removeItem(artKey())}catch(e){}S.validation=null;render();toast("Pattern removed")});
+
+/* ---------- Schema panel ---------- */
+let schemaOpen=null;
+function renderSchema(){
+  const q=norm($("#schemaFilter").value);const mappedKeys=new Set(Object.values(S.mapping));const sc=schema();
+  if(schemaOpen==null)schemaOpen=new Set([sc.table,sc.proc].filter(Boolean));
+  $("#schemaSub").textContent=`${CATALOG.length} objects · ${CATALOG.reduce((a,t)=>a+t.cols.length,0)} columns · ${Object.keys(MASTER_TABLES).length} master tables`;
+  $("#schemaTree").innerHTML=CATALOG.map(t=>{
+    const cols=t.cols.filter(c=>!q||norm(c.key).includes(q)||norm(t.name).includes(q)||(c.master&&norm(c.master).includes(q)));if(!cols.length)return"";
+    const open=q?true:schemaOpen.has(t.name);
+    const deps=(t.deps||[]).map(d=>{if(Array.isArray(d))return`<span>↳ <b>${esc(d[0])}</b> — ${esc(d[1])}</span>`;const m=MASTER_TABLES[d];return m?`<span>↳ <b>${esc(d)}</b> (${esc(m.label)}: ${esc(m.id)} / ${esc(m.name)})${m.inferred?' <span class="pill warn" style="font-size:9px">verify</span>':""}<code>${esc(m.sql)}</code></span>`:`<span>↳ ${esc(d)}</span>`}).join("");
+    return`<div class="st-group ${open?"open":""}" data-t="${esc(t.name)}"><div class="st-head"><span class="car">▶</span><b>${esc(t.name)}</b><span class="kind ${t.kind}">${t.kind}</span><span class="small muted mono">${t.cols.length}</span></div>
+      <div class="st-body"><div class="st-dep"><span>${esc(t.desc)}</span>${deps}</div>${cols.map(c=>{const f=sc.fields.find(x=>x.key===c.key&&(x.table||sc.table)===t.name);const inType=!!f;const mapped=f&&(mappedKeys.has(f.key)||!!S.defaults[f.key]);const dflt=f&&!mappedKeys.has(f.key)&&S.defaults[f.key];
+        return`<div class="st-col ${mapped?"mapped":""} ${c.inferred?"inferred":""} ${f&&f.req?"req":""}" data-col="${esc(c.key)}" data-tbl="${esc(t.name)}" title="${inType?(mapped?"Mapped":"Click to map to highlighted source column"):"Not a target for "+esc(sc.label)}"><span class="dotm"></span><span class="nm">${esc(c.key)}${f&&f.req?' <span class="req">*</span>':""}${dflt?' <span class="pill info" style="font-size:9px">default</span>':""}</span>${c.master?`<span class="fk">→ ${esc(c.master)}</span>`:""}<span class="ty">${esc((c.sql||"").split("  ")[0])}${c.inferred?" ?":""}</span></div>`}).join("")}</div></div>`}).join("")||`<div class="st-dep">No columns match "${esc($("#schemaFilter").value)}"</div>`;
+}
+$("#schemaFilter").addEventListener("input",renderSchema);
+$("#schemaTree").addEventListener("click",e=>{
+  const h=e.target.closest(".st-head");if(h){const t=h.parentElement.dataset.t;schemaOpen.has(t)?schemaOpen.delete(t):schemaOpen.add(t);renderSchema();return}
+  const c=e.target.closest(".st-col");if(!c)return;const f=schema().fields.find(x=>x.key===c.dataset.col&&(x.table||schema().table)===c.dataset.tbl);
+  if(!f){toast(`${c.dataset.tbl}.${c.dataset.col} is not a target column for ${schema().label}`);return}
+  if(hlSrc==null||hlSrc<0){toast("Click a source column on the left first");return}
+  Object.keys(S.mapping).forEach(k=>{if(S.mapping[k]===f.key)delete S.mapping[k]});S.mapping[hlSrc]=f.key;S.masterMap={};S.validation=null;hlSrc=null;render();toast(`${S.columns[+Object.keys(S.mapping).find(k=>S.mapping[k]===f.key)]} → ${c.dataset.tbl}.${f.key}`);
+});
+$("#schemaSrc").addEventListener("change",()=>{const live=$("#schemaSrc").value==="live";$("#schemaHint").innerHTML=live?`Live mode calls <code>GET /api/import/schema</code>, which runs:<br><code style="white-space:pre-wrap;font-size:10.5px">${esc(SCHEMA_SQL)}</code>`:"Click a column to map it to the highlighted source column. Dependencies show the master table each FK points to and the lookup query the legacy form runs.";if(live)toast("Live schema needs the import API; showing embedded catalog")});
+$("#autoMap").addEventListener("click",()=>{S.mapping={};autoMap();S.masterMap={};S.validation=null;render();toast("Auto-mapped "+Object.keys(S.mapping).length+" columns")});
+function tplKey(){return"rc_import_templates_"+S.importType}
+function loadTpls(){try{return JSON.parse(localStorage.getItem(tplKey())||"{}")}catch(e){return{}}}
+function renderTplList(){const sel=$("#tplSelect");const t=loadTpls();sel.innerHTML='<option value="">Load template…</option>'+Object.keys(t).map(k=>`<option>${esc(k)}</option>`).join("")}
+$("#tplSelect").addEventListener("change",()=>{const t=loadTpls()[$("#tplSelect").value];if(!t)return;S.mapping={};S.columns.forEach((c,i)=>{if(t.byName[c])S.mapping[i]=t.byName[c]});S.transforms=t.transforms||{};S.defaults=t.defaults||{};S.masterMap={};S.validation=null;render();toast("Template applied")});
+$("#saveTpl").addEventListener("click",()=>{const name=`${schema().label} · ${S.file?S.file.name.replace(/\.[^.]+$/,""):"mapping"} · ${new Date().toLocaleDateString("en-IN")}`;const byName={};Object.entries(S.mapping).forEach(([i,k])=>byName[S.columns[i]]=k);try{const t=loadTpls();t[name]={byName,defaults:S.defaults,transforms:S.transforms,saved:Date.now()};localStorage.setItem(tplKey(),JSON.stringify(t));renderTplList();toast("Template saved: "+name)}catch(e){toast("Could not save template in this browser")}});
+
+/* ---------- STEP 4: Master mapping ---------- */
+function mappedFieldIndex(key){const e=Object.entries(S.mapping).find(([,k])=>k===key);return e?+e[0]:-1}
+function applyTransform(v,i){const t=S.transforms[i];if(!t||t==="None"||v==="")return v;
+  const forced=(a,b,y)=>{const m=latinDigits(v).match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/);if(!m)return v;let yy=+m[3];if(yy<100)yy+=2000;const d=y==="DMY"?mkDate(yy,+m[2],+m[1]):mkDate(yy,+m[1],+m[2]);return d?iso(d):v};
+  switch(t){case"Trim":return v.trim();case"UPPERCASE":return v.toUpperCase();case"Title Case":return v.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());case"Strip non-digits":return v.replace(/\D/g,"");
+    case"Date: force DD/MM/YYYY":return forced(0,0,"DMY");case"Date: force MM/DD/YYYY":return forced(0,0,"MDY");
+    case"Date: HBS int → date":{const d=HBS.fromInt(v);return d?iso(d):v}
+    case"Date: Excel serial → date":{return /^\d+$/.test(v)?iso(new Date(Date.UTC(1899,11,30)+Number(v)*864e5)):v}
+    case"Number: 1.234,56 → 1234.56":return v.replace(/\./g,"").replace(",",".");
+    case"Multiply ×100":{const n=parseNum(v);return isNaN(n)?v:String(n*100)}default:return v}}
+function cell(row,key){const d=S.defaults[key];if(d&&d.override&&d.mode==="compose")return composeName(d,row,key);if(d&&d.override&&d.mode==="const")return d.value??"";const i=mappedFieldIndex(key);if(i>=0)return applyTransform(row[i],i);return d?computeDefault(d,row,key):""}
+/* Article name: "{Brand} {Category} {Style} {Color} {Size}" → tokens resolved from other target columns (or raw source columns), empty tokens dropped */
+function composeName(d,row,key){const sep=d.sep??" ";const parts=[];const tpl=String(d.value||"");
+  const re=/\{([^}]+)\}/g;let m,last=0,out="";
+  const tokens=tpl.split(/(\{[^}]+\})/).filter(Boolean);
+  tokens.forEach(t=>{const mm=t.match(/^\{([^}]+)\}$/);if(!mm){out+=t;return}const k=mm[1].trim();if(k===key)return;let v="";
+    if(schema().fields.some(f=>f.key===k))v=cell(row,k);else{const i=S.columns.indexOf(k);v=i>=0?row[i]:""}
+    v=String(v||"").replace(/\s*\[[^\]]*\]$/,"").trim();if(v)parts.push(v)});
+  let name=tpl.replace(/\{[^}]+\}/g,"").trim()?parts.join(sep):parts.join(sep);
+  name=name.replace(/\s+/g," ").trim();
+  if(d.case==="upper")name=name.toUpperCase();else if(d.case==="title")name=name.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+  const f=schema().fields.find(x=>x.key===key);const max=f&&/\((\d+)\)/.test(f.sql||"")?+RegExp.$1:200;return name.slice(0,max)}
+const ART_PRESETS={
+  "Apparel":"{Brand} {SubCategory} {Style} {Color} {Size}",
+  "Footwear":"{Brand} {Category} {Design} {Color} {Size}",
+  "Jewellery":"{Category} {Design} {Verticle2} {Size}",
+  "Pharma":"{ItemDescription} {Verticle2} {UOMId}",
+  "Grocery / FMCG":"{Brand} {ItemDescription} {Size}",
+  "Code + name":"{OEMCode} - {ItemDescription}"};
+const ART_TOKENS=["Brand","Category","SubCategory","Division","Department","Style","Design","Color","Size","Fabric","UOMId","OEMCode","ItemCode","Verticle1","Verticle2","Verticle3","Supplier","ItemDescription","ArtName"];
+const hasSource=key=>mappedFieldIndex(key)>=0||!!S.defaults[key];
+/* Default rules for target columns that have no source column */
+const DEF_MODES=[["compose","Compose from properties (article name)"],["blank","Blank ('')"],["const","Constant value"],["today","Today's date (→ HBS)"],["rownum","Row number"],["batch","Batch / MRNo reference"],["master","Pick from master"],["copy","Copy another source column"],["expr","Derive: expression"],["user","Current user / company"]];
+function computeDefault(d,row,key){
+  switch(d.mode){
+    case"compose":return composeName(d,row,key);
+    case"const":return d.value??"";
+    case"today":return iso(new Date(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())));
+    case"rownum":return String((row._i??0)+1);
+    case"batch":return S.imp.batch||"IMP-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-NEW";
+    case"master":return d.value||"";
+    case"copy":{const i=S.columns.indexOf(d.value);return i<0?"":row[i]}
+    case"user":return d.value||"U10001";
+    case"expr":{try{let e=String(d.value||"").replace(/\{([^}]+)\}/g,(m,c)=>{const i=S.columns.indexOf(c.trim());const n=i<0?NaN:parseNum(row[i]);return isNaN(n)?"0":String(n)});if(!/^[\d.+\-*\/() ]*$/.test(e))return"";const r=Function("return ("+(e||"0")+")")();return Number.isFinite(r)?String(Math.round(r*10000)/10000):""}catch(err){return""}}
+    default:return""}
+}
+/* Standard defaults for Stock_Import_Export, from the Apparels query and the Profiler trace */
+const STD_DEFAULTS={SlNo:{mode:"rownum"},TransDate:{mode:"today"},TransNo:{mode:"batch"},DisType:{mode:"const",value:"A"},Discount:{mode:"const",value:"0"},PurchaseDiscount:{mode:"const",value:"0"},PurchaseDiscountType:{mode:"const",value:"A"},Taxtype:{mode:"const",value:"I"},InTaxtype:{mode:"const",value:"E"},CounterID:{mode:"master",value:"COUNTER 1 [COU10001]"},Tax:{mode:"master",value:"GST 0% [TX00]"},InTax:{mode:"master",value:"GST 0% [TX00]"},UOMId:{mode:"master",value:"PCS"},Category:{mode:"master",value:"GROCERY [CAT001]"},Supplier:{mode:"master",value:"Sri Lakshmi Traders [V10001]"},DiscountPrice:{mode:"expr",value:"{MRP}"},Qty:{mode:"const",value:"0"},PurchasePrice:{mode:"const",value:"0"},MRP:{mode:"const",value:"0"},ItemDescription:{mode:"copy"},status:{mode:"const",value:"A"},BranchId:{mode:"user"},CompId:{mode:"const",value:"C001"},UserId:{mode:"user",value:"U10001"},TransType:{mode:"const",value:"OS"}};
+function itemExists(code,oem){const a=norm(code),b=norm(oem);if(!a&&!b)return false;return MASTER_TABLES.Itemmaster.rows.some(m=>(a&&norm(m[0])===a)||(b&&(norm(m[2]||"")===b||norm(m[0])===b)))}
+function cellRole(row,role){const f=schema().fields.find(x=>x.role===role);return f?cell(row,f.key):""}
+/* ---------- STEP 4: Suppliers ---------- */
+const SUP_FIELDS=[["vend_name","Supplier Name *",["suppliername","supplier","vendorname","vendor","name","partyname","party","vendname"]],["vend_uid","Supplier Code",["suppliercode","code","vendorcode","venduid","supplierid","id"]],["GSTIN","GSTIN",["gstin","gstno","gst","gstnumber"]],["PAN","PAN",["pan","panno"]],["Mobile","Mobile",["mobile","phone","contact","mobileno","cell"]],["Email","Email",["email","mail","emailid"]],["Address","Address",["address","addr","address1"]],["City","City",["city","town"]],["State","State",["state"]],["PIN","PIN",["pin","pincode","zip","postalcode"]],["Credit_Days","Credit Days",["creditdays","paymentdays","terms","creditperiod"]],["Outstanding","Opening Outstanding",["openingoutstanding","outstanding","openingbalance","balance","obamount","amount","closingbalance"]],["DrCr","Dr/Cr",["drcr","crdr","type","balancetype","nature"]],["AsOn","As On",["ason","asondate","date","obdate"]]];
+function supAutoMap(){S.sup.map={};const used=new Set();S.sup.cols.forEach((c,i)=>{const n=norm(c);const f=SUP_FIELDS.find(([k,l,syn])=>!used.has(k)&&(syn.includes(n)||norm(l)===n));if(f){S.sup.map[i]=f[0];used.add(f[0])}})}
+function supCell(row,key){const i=Object.keys(S.sup.map).find(i=>S.sup.map[i]===key);return i==null?"":String(row[i]||"").trim()}
+function loadSupplierText(text,f){const d=detectDelim(text);const all=parseCSV(text,d);if(!all.length){toast("Empty supplier file");return}S.sup.cols=all[0].map((c,i)=>c.trim()||`Column ${i+1}`);S.sup.rows=all.slice(1).map(r=>S.sup.cols.map((_,i)=>(r[i]??"").trim()));S.sup.file={name:f.name};supAutoMap();S.masterMap={};S.validation=null;const c=$("#supChip");c.hidden=false;c.innerHTML=`<span class="filechip">📄 <span>${esc(f.name)}</span> <span class="muted">${S.sup.rows.length} suppliers</span></span>`;render()}
+$("#supInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>loadSupplierText(String(r.result),f);r.readAsText(f)});
+$("#supSample").addEventListener("click",()=>loadSupplierText(SAMPLE_SUPPLIERS,{name:"suppliers_opening_FY2627.csv"}));
+["dragenter","dragover"].forEach(ev=>$("#supDrop").addEventListener(ev,e=>{e.preventDefault();$("#supDrop").classList.add("over")}));
+["dragleave","drop"].forEach(ev=>$("#supDrop").addEventListener(ev,e=>{e.preventDefault();$("#supDrop").classList.remove("over")}));
+$("#supDrop").addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>loadSupplierText(String(r.result),f);r.readAsText(f)}});
+$("#supModes").addEventListener("click",e=>{const b=e.target.closest("[data-supmode]");if(!b)return;S.sup.mode=b.dataset.supmode;S.masterMap={};S.validation=null;render()});
+$("#supMapRows").addEventListener("change",e=>{const i=e.target.dataset.smap;if(i==null)return;if(e.target.value)S.sup.map[i]=e.target.value;else delete S.sup.map[i];S.masterMap={};S.validation=null;render()});
+["supSingleSel","supSingleName","supSingleGst","supSingleOut","supSingleDrCr","supCreateLedger","supGroup","supExisting"].forEach(id=>$("#"+id).addEventListener("change",()=>{S.masterMap={};S.validation=null;render()}));
+function supplierVendorRow(name,code){const n=norm(name),c=norm(code);return MASTER_TABLES.vendormaster.rows.find(r=>(c&&norm(r[0])===c)||norm(r[1])===n)}
+/* The supplier list this import will use: [{name,code,gstin,status:"existing"|"new",rows,outstanding,drcr,issues:[]}] */
+function supplierList(){
+  const supF=schema().fields.find(f=>f.master==="vendormaster");const stockVals={};
+  if(supF)S.rows.forEach(r=>{const v=cell(r,supF.key);if(v)stockVals[v]=(stockVals[v]||0)+1});
+  const list=[];const push=o=>{o.issues=o.issues||[];const vr=supplierVendorRow(o.name,o.code);o.status=vr?"existing":"new";if(vr){o.code=vr[0];o.display=`${vr[1]} [${vr[0]}]`}if(!o.name)o.issues.push("Name missing");if(o.gstin&&!/^\d{2}[A-Z0-9]{13}$/i.test(o.gstin))o.issues.push("GSTIN not 15 chars");if(o.outstanding&&isNaN(o.outstanding))o.issues.push("Outstanding not numeric");list.push(o)};
+  if(S.sup.mode==="single"){const sel=$("#supSingleSel").value;const isNew=sel==="__new__";const name=isNew?$("#supSingleName").value.trim():sel.replace(/\s*\[[^\]]*\]$/,"");push({name,code:isNew?"":masterId("vendormaster",sel),gstin:$("#supSingleGst").value.trim(),outstanding:parseNum($("#supSingleOut").value||"0"),drcr:$("#supSingleDrCr").value,rows:S.rows.length,source:"single"})}
+  else if(S.sup.mode==="file"){S.sup.rows.forEach(r=>{const name=supCell(r,"vend_name");const o={name,code:supCell(r,"vend_uid"),gstin:supCell(r,"GSTIN"),pan:supCell(r,"PAN"),mobile:supCell(r,"Mobile"),email:supCell(r,"Email"),city:supCell(r,"City"),state:supCell(r,"State"),pin:supCell(r,"PIN"),creditDays:supCell(r,"Credit_Days"),outstanding:parseNum(supCell(r,"Outstanding")||"0"),drcr:/^d/i.test(supCell(r,"DrCr"))?"Dr":"Cr",asOn:supCell(r,"AsOn"),rows:0,source:"file"};
+      const k=Object.keys(stockVals).find(v=>norm(v)===norm(name)||(o.code&&norm(v)===norm(o.code)));if(k){o.rows=stockVals[k];delete stockVals[k]}push(o)});
+    Object.entries(stockVals).forEach(([v,n])=>push({name:v,code:"",rows:n,outstanding:0,drcr:"Cr",source:"stock",issues:["In stock file but not in supplier file"]}))}
+  else{Object.entries(stockVals).forEach(([v,n])=>push({name:v,code:"",rows:n,outstanding:0,drcr:"Cr",source:"stock"}))}
+  return list;
+}
+function supplierReady(){const L=supplierList();const bad=L.filter(x=>x.issues.some(i=>/missing|numeric/i.test(i)));if(S.sup.mode==="file"&&!S.sup.rows.length)return{ok:false,msg:"Upload a supplier file or choose another option"};if(S.sup.mode==="single"&&!L[0]?.name)return{ok:false,msg:"Choose or name the supplier"};if(bad.length)return{ok:false,msg:`${bad.length} supplier row(s) need fixing`};return{ok:true,msg:`${L.length} supplier(s): ${L.filter(x=>x.status==="new").length} new, ${L.filter(x=>x.status==="existing").length} existing`}}
+function renderSuppliers(){
+  $$("[data-supmode]").forEach(b=>b.classList.toggle("sel",b.dataset.supmode===S.sup.mode));
+  $("#supSingle").hidden=S.sup.mode!=="single";$("#supFile").hidden=S.sup.mode!=="file";
+  const sel=$("#supSingleSel");if(!sel.options.length){sel.innerHTML=(MASTERS.vendormaster||[]).map(o=>`<option>${esc(o)}</option>`).join("")+`<option value="__new__">+ New supplier…</option>`}$("#supSingleNewWrap").hidden=sel.value!=="__new__";
+  if(!$("#supObDate").value)$("#supObDate").value=iso(parseDate(cellRole(S.rows[0]||[],"asOn"))||new Date());
+  const wrap=$("#supMapWrap");wrap.hidden=!S.sup.cols.length;
+  if(S.sup.cols.length){const used=Object.values(S.sup.map);$("#supMapRows").innerHTML=S.sup.cols.map((c,i)=>{const cur=S.sup.map[i]||"";const samp=S.sup.rows[0]?S.sup.rows[0][i]:"";return`<div class="map-row"><div class="src-col"><b>${esc(c)}</b><span class="samp">${esc(samp)}</span></div><div class="arrow">→</div><div><select data-smap="${i}"><option value="">— Ignore —</option>${SUP_FIELDS.map(([k,l])=>`<option value="${k}" ${cur===k?"selected":""} ${used.includes(k)&&cur!==k?"disabled":""}>${esc(l)}</option>`).join("")}</select></div><div></div></div>`}).join("")}
+  const L=supplierList();const nw=L.filter(x=>x.status==="new"),ex=L.filter(x=>x.status==="existing");const cr=L.filter(x=>x.drcr==="Cr").reduce((a,x)=>a+(x.outstanding||0),0),dr=L.filter(x=>x.drcr==="Dr").reduce((a,x)=>a+(x.outstanding||0),0);
+  const ledger=$("#supCreateLedger").checked;
+  $("#supTiles").innerHTML=[["info",fmt(L.length),"Suppliers in this import"],["acc",fmt(nw.length),"New → vendormaster"+(ledger?" + ledger":"")],["ok",fmt(ex.length),"Existing"],["warn",fmtNum(cr,{minimumFractionDigits:2}),`Opening payable (Cr) · ${regionOf().cur}`],["err",fmtNum(dr,{minimumFractionDigits:2}),"Opening receivable (Dr)"]].map(([c,n,l])=>`<div class="tile ${c}"><div class="v" style="font-size:${String(n).length>9?"18px":"24px"}">${n}</div><div class="l">${l}</div></div>`).join("");
+  $("#supCount").textContent=`${L.length} suppliers`;
+  $("#supTable tbody").innerHTML=L.length?L.map(x=>`<tr class="${x.issues.length?"r-warn":x.status==="new"?"r-ok":""}"><td><b>${esc(x.name)}</b><div class="small muted">${esc(x.source==="file"?"supplier file":x.source==="single"?"single supplier":"stock file")}</div></td><td class="mono">${esc(x.code)||'<span class="muted">auto</span>'}</td><td class="mono">${esc(x.gstin||"")}</td><td><span class="pill ${x.status==="new"?"info":"ok"}">${x.status==="new"?"Create":"Existing"}</span></td><td class="num">${x.rows||0}</td><td class="num">${x.outstanding?fmtNum(x.outstanding,{minimumFractionDigits:2}):"—"}</td><td>${x.outstanding?x.drcr:""}</td><td class="small">${x.status==="new"&&ledger?esc($("#supGroup").value):x.status==="existing"&&x.outstanding&&$("#supExisting").value==="update"?"post OB":"—"}</td><td class="small" style="white-space:normal;min-width:180px;color:var(--warn)">${x.issues.map(esc).join("; ")}</td></tr>`).join(""):`<tr><td colspan="9" class="muted">No supplier column mapped and no file uploaded. Choose "Single supplier" or map the Supplier column in Mapping.</td></tr>`;
+}
+/* Make the stock file's Supplier column follow the decision taken here */
+function applySupplierDefaults(){const f=schema().fields.find(x=>x.master==="vendormaster");if(!f)return;
+  if(S.sup.mode==="single"){const L=supplierList();const x=L[0];if(x&&x.name){S.defaults[f.key]={mode:"const",value:x.display||x.name,override:true};S.supplierOverride=f.key}}
+  else if(S.supplierOverride===f.key){delete S.defaults[f.key];S.supplierOverride=null}}
+function buildMasterMap(){
+  schema().fields.filter(f=>f.master&&hasSource(f.key)).forEach(f=>{const vals=[...new Set(S.rows.map(r=>cell(r,f.key)).filter(v=>v!==""))];
+    S.masterMap[f.master]=S.masterMap[f.master]||{};vals.forEach(v=>{if(!S.masterMap[f.master][v])S.masterMap[f.master][v]=autoMatch(f.master,v)})});
+  const copyAsIs=S.source==="rc"&&$("#rcCopyMasters").value==="copy";
+  Object.entries(S.masterMap).forEach(([m,map])=>Object.entries(map).forEach(([v,x])=>{
+    if(m==="vendormaster"){const L=supplierList();const hit=L.find(o=>norm(o.name)===norm(v)||(o.code&&norm(o.code)===norm(v)));if(hit){if(hit.status==="existing"){x.mode="existing";x.to=hit.display;x.via="suppliers step"}else{x.mode="new";x.to=hit.name;x.via="suppliers step (create + ledger)"}}return}
+    if(x.mode!=="unresolved")return;
+    if(copyAsIs){x.mode="new";x.to=v;x.via="copied from source DB (same id)"}
+    else if(S.dbMode==="fresh"&&MASTER_TABLES[m].matchBy!=="code"){x.mode="new";x.to=v;x.via="fresh DB default"}}));
+}
+/* Masters that are normally created by the import itself: unmatched values default to "new" */
+const AUTO_CREATE=new Set(["Batch"]);
+/* Remembered aliases: source value → chosen display, per master, per browser */
+function loadAliases(){try{return JSON.parse(localStorage.getItem("rc_master_aliases")||"{}")}catch(e){return{}}}
+function saveAliases(){if(!$("#rememberAliases").checked)return;try{const A=loadAliases();Object.entries(S.masterMap).forEach(([m,map])=>{A[m]=A[m]||{};Object.entries(map).forEach(([v,x])=>{if(x.mode==="existing"&&x.to)A[m][norm(v)]=x.to})});localStorage.setItem("rc_master_aliases",JSON.stringify(A))}catch(e){}}
+function sim(a,b){a=norm(a);b=norm(b);if(!a||!b)return 0;if(a===b)return 1;const sing=x=>x.replace(/(es|s)$/,"");if(sing(a)===sing(b))return .95;if(a.includes(b)||b.includes(a))return Math.min(a.length,b.length)/Math.max(a.length,b.length)+.3;
+  const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++){d[i]=[i]}for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return 1-d[m][n]/Math.max(m,n)}
+/* Match a source value against alias memory, then id / name / extra (e.g. Tax_per). "5" or "GST 5%" → Tax_Master TX05. */
+function autoMatch(master,v,fuzzy){const mt=MASTER_TABLES[master];const list=MASTERS[master]||[];if(list.includes(v))return{mode:"existing",to:v};
+  if(mt.matchBy==="code"){const n=norm(v);const i=mt.rows.findIndex(r=>norm(r[0])===n||(r[2]&&norm(r[2])===n));return i>=0?{mode:"existing",to:list[i],via:"code"}:{mode:"unresolved",to:"",via:"no such Itemcode/OEMCode"}}
+  const al=(loadAliases()[master]||{})[norm(v)];if(al&&list.includes(al))return{mode:"existing",to:al,via:"alias"};
+  const n=norm(v);const pct=n.replace(/^gst|percent|pct|%$/g,"");
+  let idx=mt.rows.findIndex(r=>norm(r[0])===n||norm(r[1])===n||(r[2]!=null&&(norm(r[2])===n||norm(r[2])===pct||norm("gst"+r[2])===n)));
+  if(idx<0)idx=mt.rows.findIndex(r=>n.length>=3&&(norm(r[1]).startsWith(n)||n.startsWith(norm(r[1]))));
+  if(idx<0&&fuzzy){let best=0;mt.rows.forEach((r,i)=>{const sc=sim(v,r[1]);if(sc>best){best=sc;idx=i}});if(best<0.8)idx=-1;else return{mode:"existing",to:list[idx],via:"fuzzy "+Math.round(best*100)+"%"}}
+  if(idx>=0)return{mode:"existing",to:list[idx]};
+  if(AUTO_CREATE.has(master))return{mode:"new",to:v,via:"auto-create"};return{mode:"unresolved",to:""}}
+function masterId(master,display){const mt=MASTER_TABLES[master];const i=(MASTERS[master]||[]).indexOf(display);return i>=0?mt.rows[i][0]:display}
+function unresolvedMasters(){let n=0;Object.values(S.masterMap).forEach(m=>Object.values(m).forEach(x=>{if(x.mode==="unresolved")n++}));return n}
+function mmCounts(map){const c={existing:0,new:0,skip:0,unresolved:0};Object.values(map).forEach(x=>c[x.mode]=(c[x.mode]||0)+1);return c}
+let mTab=null,mmFilterMode="all";const mmSel=new Set();const policies={};
+function renderMasters(){
+  if(!Object.keys(S.masterMap).length)buildMasterMap();
+  const keys=Object.keys(S.masterMap);
+  const tot={existing:0,new:0,skip:0,unresolved:0,values:0};keys.forEach(k=>{const c=mmCounts(S.masterMap[k]);Object.keys(c).forEach(x=>tot[x]+=c[x]);tot.values+=Object.keys(S.masterMap[k]).length});
+  $("#mmTiles").innerHTML=[["info",fmt(tot.values),`Distinct values across ${keys.length} masters`],["ok",fmt(tot.existing),"Matched to existing"],["acc",fmt(tot.new),"Will be created"],["warn",fmt(tot.skip),"Rows skipped"],["err",fmt(tot.unresolved),"Unresolved"]].map(([c,n,l])=>`<div class="tile ${c}"><div class="v">${n}</div><div class="l">${l}</div></div>`).join("");
+  renderItemIdentity();
+  if(!keys.length){$("#mTabs").innerHTML="";$("#mmList").innerHTML=`<div class="alert info">No master fields are mapped for this import type. Continue to validation.</div>`;$("#mmTools").hidden=true;return}
+  $("#mmTools").hidden=false;
+  if(!mTab||!keys.includes(mTab))mTab=keys.find(k=>mmCounts(S.masterMap[k]).unresolved)||keys[0];
+  $("#mTabs").innerHTML=keys.map(k=>{const c=mmCounts(S.masterMap[k]);const mt=MASTER_TABLES[k];return`<button type="button" class="m-tab ${k===mTab?"on":""}" data-mt="${k}">${esc(mt.label)}<span class="cnt">${Object.keys(S.masterMap[k]).length}</span>${c.unresolved?`<span class="pill err">${c.unresolved}</span>`:`<span class="pill ok">✓</span>`}</button>`}).join("");
+  /* policy table */
+  $("#policyTable tbody").innerHTML=keys.map(k=>{const c=mmCounts(S.masterMap[k]);const mt=MASTER_TABLES[k];const p=policies[k]||(policies[k]={mode:mt.matchBy==="code"||k==="vendormaster"?"keep":S.dbMode==="fresh"?"new":"keep",to:(MASTERS[k]||[])[0]||""});
+    return`<tr><td><b>${esc(mt.label)}</b></td><td class="mono small">${esc(k)}</td><td class="num">${Object.keys(S.masterMap[k]).length}</td><td class="num">${c.existing}</td><td class="num">${c.unresolved?`<span class="pill err">${c.unresolved}</span>`:"0"}</td>
+    <td><select data-pol="${k}">${mt.matchBy==="code"?"":`<option value="new" ${p.mode==="new"?"selected":""}>Create new master for each value</option>`}<option value="one" ${p.mode==="one"?"selected":""}>Map all to one existing value</option><option value="skip" ${p.mode==="skip"?"selected":""}>Skip those rows</option><option value="keep" ${p.mode==="keep"?"selected":""}>Leave unresolved (block import)</option></select></td>
+    <td><select data-polto="${k}" ${p.mode==="one"?"":"disabled"}>${(MASTERS[k]||[]).map(o=>`<option ${p.to===o?"selected":""}>${esc(o)}</option>`).join("")||"<option>— none —</option>"}</select></td></tr>`}).join("");
+  /* current tab */
+  const m=S.masterMap[mTab];const list=MASTERS[mTab];const mt=MASTER_TABLES[mTab];const q=norm($("#mmSearch").value);
+  $("#bulkExisting").innerHTML=list.length?list.map(o=>`<option>${esc(o)}</option>`).join(""):"<option value=''>— no existing masters —</option>";
+  $$("#mmFilter .chip").forEach(c=>c.classList.toggle("on",c.dataset.mf===mmFilterMode));
+  const entries=Object.entries(m).filter(([v,x])=>(mmFilterMode==="all"||x.mode===mmFilterMode)&&(!q||norm(v).includes(q)||norm(x.to).includes(q)));
+  [...mmSel].forEach(v=>{if(!m[v])mmSel.delete(v)});
+  $("#mmSelCount").textContent=`${mmSel.size} selected`;$("#mmSelAll").checked=entries.length>0&&entries.every(([v])=>mmSel.has(v));
+  const cls={existing:"e",new:"n",skip:"s",unresolved:"u"};
+  $("#mmList").innerHTML=`<div class="st-dep" style="padding-left:10px;margin-bottom:8px;border:1px solid var(--line);border-radius:6px"><span><b>${esc(mTab)}</b> · key <span class="mono">${esc(mt.id)}</span>, display <span class="mono">${esc(mt.name)}</span>${mt.inferred?' · <span class="pill warn" style="font-size:9px">table name to verify</span>':""}${AUTO_CREATE.has(mTab)?' · <span class="pill info" style="font-size:9px">unmatched values are created by the import</span>':""}</span><code>${esc(mt.sql)}</code></div>`+
+  `<div class="mm-row map-head" style="border-radius:6px"><div></div><div>Source value</div><div>${esc(mt.label)} (${esc(mt.name)} [${esc(mt.id)}])</div><div>Action</div></div>`+(entries.length?entries.map(([v,x])=>{const cnt=S.rows.filter(r=>schema().fields.some(f=>f.master===mTab&&cell(r,f.key)===v)).length;
+    return`<div class="mm-row ${cls[x.mode]}"><input type="checkbox" data-sel="${esc(v)}" ${mmSel.has(v)?"checked":""} aria-label="Select ${esc(v)}"><div class="src-col"><b>${esc(v)}</b><span class="samp">${cnt} row${cnt>1?"s":""}${x.via?" · "+esc(x.via):""}</span></div>
+    <div><select data-mm="${esc(v)}" ${x.mode!=="existing"?"disabled":""} aria-label="Match ${esc(v)}">${list.length?list.map(o=>`<option ${x.to===o?"selected":""}>${esc(o)}</option>`).join(""):"<option>— no existing masters —</option>"}</select></div>
+    <div class="chips"><button type="button" class="chip ${x.mode==="existing"?"on":""}" data-mode="existing" data-v="${esc(v)}" ${list.length?"":"disabled"}>Existing</button><button type="button" class="chip ${x.mode==="new"?"on":""}" data-mode="new" data-v="${esc(v)}" ${mt.matchBy==="code"?'disabled title="Items cannot be created from a transaction import; add them via Item Master or Opening Stock first"':""}>Create new</button><button type="button" class="chip ${x.mode==="skip"?"on":""}" data-mode="skip" data-v="${esc(v)}">Skip rows</button></div></div>`}).join(""):`<div class="mm-row"><div></div><span class="small muted">No values match this filter.</span></div>`);
+}
+function renderItemIdentity(){
+  const box=$("#itemIdentity");const sc=schema();const idf=sc.fields.filter(f=>f.identity&&hasSource(f.key));
+  if(!idf.length){box.hidden=true;return}box.hidden=false;
+  let ex=0,nw=0,blank=0;const seen=new Set();S.rows.forEach(r=>{const code=cell(r,"ItemCode"),oem=cell(r,"OEMCode");const k=code||oem;if(!k){blank++;return}if(seen.has(norm(k)))return;seen.add(norm(k));itemExists(code,oem)?ex++:nw++});
+  box.innerHTML=`<div class="row" style="justify-content:space-between"><div><h3>Items — identified by code, not matched as a master</h3><p class="small muted">Lookup: <span class="mono">Itemmaster.Itemcode</span> or <span class="mono">Itemmaster.OEMCode</span>. New items are inserted by <span class="mono">${esc(sc.proc||"the import")}</span> with their attributes resolved from the masters below; the description you see in <span class="mono">Itemproperties</span> is composed from those joins (CatName, BrandName, SizeOfDress, ColorName, PartyName…).</p></div>
+    <div class="row"><span class="pill info">${fmt(ex)} exist → ${esc($("#dupPolicy").options[$("#dupPolicy").selectedIndex].text.toLowerCase())}</span><span class="pill ok">${fmt(nw)} new → insert</span>${blank?`<span class="pill err">${fmt(blank)} rows with no code</span>`:""}</div></div>`;
+}
+function mmSet(v,mode,to){const x=S.masterMap[mTab][v];x.mode=mode;x.via="";if(mode==="existing")x.to=to||((MASTERS[mTab]||[])[0]||"");if(mode==="new")x.to=v;if(mode==="skip")x.to=""}
+function mmDone(msg){S.validation=null;saveAliases();render();if(msg)toast(msg)}
+$("#mTabs").addEventListener("click",e=>{const b=e.target.closest("[data-mt]");if(b){mTab=b.dataset.mt;mmSel.clear();renderMasters()}});
+$("#mmList").addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b||b.disabled)return;mmSet(b.dataset.v,b.dataset.mode);mmDone()});
+$("#mmList").addEventListener("change",e=>{const s=e.target.dataset.mm;if(s!=null){S.masterMap[mTab][s].to=e.target.value;S.masterMap[mTab][s].via="";S.validation=null;saveAliases()}const sel=e.target.dataset.sel;if(sel!=null){e.target.checked?mmSel.add(sel):mmSel.delete(sel);$("#mmSelCount").textContent=`${mmSel.size} selected`}});
+$("#mmSearch").addEventListener("input",renderMasters);
+$("#mmFilter").addEventListener("click",e=>{const c=e.target.closest(".chip");if(c){mmFilterMode=c.dataset.mf;renderMasters()}});
+$("#mmSelAll").addEventListener("change",e=>{const boxes=$$("#mmList [data-sel]");boxes.forEach(b=>{b.checked=e.target.checked;e.target.checked?mmSel.add(b.dataset.sel):mmSel.delete(b.dataset.sel)});$("#mmSelCount").textContent=`${mmSel.size} selected`});
+$("#bulkApplyExisting").addEventListener("click",()=>{if(!mmSel.size){toast("Select some values first");return}const to=$("#bulkExisting").value;mmSel.forEach(v=>mmSet(v,"existing",to));const n=mmSel.size;mmSel.clear();mmDone(`${n} value(s) mapped to ${to}`)});
+$("#bulkNew").addEventListener("click",()=>{if(!mmSel.size){toast("Select some values first");return}mmSel.forEach(v=>mmSet(v,"new"));const n=mmSel.size;mmSel.clear();mmDone(`${n} new ${MASTER_TABLES[mTab].label} master(s) will be created`)});
+$("#bulkSkip").addEventListener("click",()=>{if(!mmSel.size){toast("Select some values first");return}mmSel.forEach(v=>mmSet(v,"skip"));const n=mmSel.size;mmSel.clear();mmDone(`Rows with ${n} value(s) will be skipped`)});
+$("#bulkAllToOne").addEventListener("click",()=>{const to=$("#bulkExisting").value;if(!to){toast("No existing masters to map to");return}let n=0;Object.entries(S.masterMap[mTab]).forEach(([v,x])=>{if(x.mode==="unresolved"){mmSet(v,"existing",to);n++}});mmDone(`${n} unresolved value(s) mapped to ${to}`)});
+$("#tabNew").addEventListener("click",()=>{let n=0;Object.entries(S.masterMap[mTab]).forEach(([v,x])=>{if(x.mode==="unresolved"){mmSet(v,"new");n++}});mmDone(`${n} ${MASTER_TABLES[mTab].label} master(s) will be created`)});
+$("#tabSkip").addEventListener("click",()=>{let n=0;Object.entries(S.masterMap[mTab]).forEach(([v,x])=>{if(x.mode==="unresolved"){mmSet(v,"skip");n++}});mmDone(`Rows with ${n} unresolved value(s) will be skipped`)});
+$("#tabFuzzy").addEventListener("click",()=>{let n=0;Object.entries(S.masterMap[mTab]).forEach(([v,x])=>{if(x.mode==="unresolved"){const r=autoMatch(mTab,v,true);if(r.mode==="existing"){S.masterMap[mTab][v]=r;n++}}});mmDone(n?`${n} value(s) matched by similarity — check the "fuzzy" tags`:"No further matches above 80% similarity")});
+$("#autoMasters").addEventListener("click",()=>{Object.keys(S.masterMap).forEach(k=>Object.keys(S.masterMap[k]).forEach(v=>{S.masterMap[k][v]=autoMatch(k,v,true)}));mmDone("Auto-matched (exact, alias and fuzzy) against existing masters")});
+$("#keepCreate").addEventListener("click",()=>{let n=0;Object.values(S.masterMap).forEach(m=>Object.entries(m).forEach(([v,x])=>{if(x.mode==="unresolved"){x.mode="new";x.to=v;x.via="";n++}}));mmDone(`Kept all matches; ${n} new master value(s) will be created across ${Object.keys(S.masterMap).length} masters`)});
+$("#togglePolicy").addEventListener("click",()=>{const c=$("#policyCard");c.hidden=!c.hidden});
+$("#policyTable").addEventListener("change",e=>{const k=e.target.dataset.pol,kt=e.target.dataset.polto;if(k){policies[k].mode=e.target.value;renderMasters()}if(kt){policies[kt].to=e.target.value}});
+$("#policyAllNew").addEventListener("click",()=>{Object.keys(policies).forEach(k=>policies[k].mode="new");renderMasters()});
+$("#applyPolicies").addEventListener("click",()=>{let n=0;Object.entries(S.masterMap).forEach(([k,m])=>{const p=policies[k];if(!p||p.mode==="keep")return;Object.entries(m).forEach(([v,x])=>{if(x.mode!=="unresolved")return;n++;if(p.mode==="new"){x.mode="new";x.to=v}else if(p.mode==="one"){x.mode="existing";x.to=p.to}else if(p.mode==="skip"){x.mode="skip";x.to=""}x.via="policy"})});mmDone(`Policies applied to ${n} unresolved value(s)`)});
+
+/* ---------- STEP 5: Validation ---------- */
+/* Industry profiles: what identifies a stock line, and whether repeats are an error, a warning, or normal */
+const PROFILES={
+  generic:{label:"Generic retail",key:["OEMCode"],dup:"error",req:[],note:"One stock line per OEM code. A repeated OEM code is a double entry."},
+  apparel:{label:"Apparel / Footwear (OEM splits into pieces)",key:["OEMCode","Size","Color"],dup:"allow",exact:"warn",req:[],note:"The same OEM / article code legitimately repeats: stock is split per piece, size or colour and each piece gets its own barcode from the import. Only an identical line (same OEM, size, colour, qty and rate) is flagged as a possible double entry."},
+  pharma:{label:"Pharma (batch + expiry)",key:["OEMCode","BatchNo"],dup:"error",req:["BatchNo","ExpiryDate"],note:"One line per item + batch. BatchNo and ExpiryDate are mandatory; the same OEM may repeat with different batches."},
+  fmcg:{label:"Grocery / FMCG (batch optional)",key:["OEMCode","BatchNo"],dup:"warn",req:[],note:"Same OEM may repeat per batch or pack. Repeats without a batch are warned, not rejected."},
+  fresh:{label:"Fresh produce / bakery (weighed)",key:["OEMCode","PackedDate"],dup:"allow",exact:"warn",req:[],note:"Weighed and daily items repeat by packing date; quantity may be fractional."},
+  jewellery:{label:"Jewellery (every tag unique)",key:["ItemCode"],dup:"error",req:["ItemCode"],note:"Each piece carries a unique tag / ItemCode; OEM (design) code repeats freely. Duplicate tag numbers are rejected."},
+  electronics:{label:"Electronics / serialised",key:["BatchNo"],dup:"error",req:["BatchNo"],note:"BatchNo holds the serial / IMEI; it must be unique. OEM (model) code repeats."}
+};
+function profile(){return PROFILES[S.profile]||PROFILES.generic}
+function guessProfile(){const has=k=>hasSource(k);if(has("Size")&&has("Color"))return"apparel";if(has("BatchNo")&&has("ExpiryDate"))return"pharma";if(has("BatchNo"))return"fmcg";return"generic"}
+const RULES=["Mandatory fields","Duplicate key (profile)","Master existence","Quantity ≥ 0","Value / rate ≥ 0","Date format (region)","HBS conversion","Expiry after As-On","Numeric format (region)","Length limits","Business rules"];
+function runValidation(){
+  const sc=schema();const seen=new Map();const seenExact=new Map();const res=[];let ok=0,warn=0,err=0,newMasters=0,updates=0,skipped=0;
+  if(!S.profile)S.profile=guessProfile();const P=profile();
+  const dupField=sc.fields.find(f=>f.dupKey)||sc.fields.find(f=>f.req&&f.type==="code")||sc.fields[0];
+  const keyFields=P.key.filter(k=>sc.fields.some(f=>f.key===k));const mappedKeys=sc.fields.filter(f=>hasSource(f.key)).map(f=>f.key);
+  Object.values(S.masterMap).forEach(m=>Object.values(m).forEach(x=>{if(x.mode==="new")newMasters++}));
+  S.rows.forEach((r,idx)=>{const msgs=[];let lvl="ok";const E=m=>{msgs.push({l:"err",m});lvl="err"},W=m=>{msgs.push({l:"warn",m});if(lvl==="ok")lvl="warn"};
+    const key=cell(r,dupField.key)||"(blank)";const hbs={};
+    sc.fields.forEach(f=>{const v=cell(r,f.key);const mapped=hasSource(f.key);
+      if((f.req||P.req.includes(f.key))&&(!mapped||v===""))E(`${f.label} is mandatory${P.req.includes(f.key)?" for "+P.label.split(" (")[0]:""}`);
+      if(v==="")return;
+      if(f.type==="qty"||f.type==="amount"){const n=parseNum(v);if(isNaN(n))E(`${f.label} "${v}" is not a number in ${numStyle()} format`);else if(n<0)E(`${f.label} cannot be negative (${v})`);else if(f.type==="qty"&&n===0)W(`${f.label} is zero`)}
+      if(f.type==="date"){const d=parseDate(v);if(!d)E(`${f.label} "${v}" is not a valid ${dateOrder()} date`);else{const n=HBS.toInt(d);const back=HBS.fromInt(n);if(!back||iso(back)!==iso(d))E(`${f.label}: HBS round-trip failed for ${v}`);else{hbs[f.key]=n;if(d.getUTCFullYear()<1950)E(`${f.label} before 1950 cannot be stored as HBS`)}}}
+      if(f.type==="phone"&&!/^\d{10}$/.test(v.replace(/\D/g,"")))W(`${f.label} "${v}" is not a 10-digit mobile`);
+      if(f.type==="email"&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v))W(`${f.label} "${v}" looks invalid`);
+      if(f.type==="gstin"&&!/^\d{2}[A-Z0-9]{13}$/i.test(v))E(`${f.label} "${v}" is not 15 characters`);
+      if(v.length>120)W(`${f.label} longer than 120 characters`);
+      if(f.master){const x=(S.masterMap[f.master]||{})[v];if(!x||x.mode==="unresolved")E(`${f.master} "${v}" does not exist in RetailCLIQ`);else if(x.mode==="skip")E(`${f.master} "${v}" marked skip`);else if(x.mode==="new")W(`New ${f.master} "${v}" will be created`)}
+    });
+    /* business rules (role-based, so they work for every import type) */
+    const exp=parseDate(cellRole(r,"expiry")),ason=parseDate(cellRole(r,"asOn"));if(exp&&ason&&exp<ason)E("ExpiryDate is before TransDate");
+    if(exp&&!ason&&exp<new Date())W("Item already expired");
+    const mrp=parseNum(cellRole(r,"mrp")),rate=parseNum(cellRole(r,"rate"));if(mrp&&rate&&rate>mrp)W(`PurchasePrice ${fmtNum(rate)} exceeds MRP ${fmtNum(mrp)}`);
+    const sp=parseNum(cellRole(r,"salePrice"));if(mrp&&sp&&sp>mrp)W(`DiscountPrice ${fmtNum(sp)} exceeds MRP ${fmtNum(mrp)}`);
+    [["DisType",/^[PA]$/i,"P or A"],["PurchaseDiscountType",/^[PA]$/i,"P or A"],["Taxtype",/^[IE]$/i,"I or E"],["InTaxtype",/^[IE]$/i,"I or E"],["dis_type",/^[PA]$/i,"P or A"]].forEach(([k,re,exp2])=>{const v=cell(r,k);if(v&&!re.test(v))E(`${k} "${v}" must be ${exp2}`)});
+    const hsn=cellRole(r,"hsn");if(hsn&&!/^\d{4}(\d{2})?(\d{2})?$/.test(hsn))W(`HSN "${hsn}" should be 4, 6 or 8 digits`);
+    /* duplicate rule by industry profile */
+    const pk=keyFields.map(k=>norm(cell(r,k))).join("|");const pkLabel=keyFields.map(k=>`${k}=${cell(r,k)||"∅"}`).join(", ");
+    if(pk.replace(/\|/g,"")!==""){
+      if(seen.has(pk)){const first=seen.get(pk)+1;if(P.dup==="error")E(`Duplicate ${keyFields.join("+")} (${pkLabel}) — first at row ${first}`);else if(P.dup==="warn")W(`Repeated ${keyFields.join("+")} (${pkLabel}) — first at row ${first}; allowed for ${P.label.split(" (")[0]}`)}
+      else seen.set(pk,idx);
+      if(P.exact){const ek=mappedKeys.filter(k=>k!=="SlNo").map(k=>norm(cell(r,k))).join("|");if(seenExact.has(ek)){W(`Identical line to row ${seenExact.get(ek)+1} (same ${keyFields.join(", ")}, qty and rate) — possible double entry`)}else seenExact.set(ek,idx)}
+    }
+    if(itemExists(cell(r,"ItemCode"),cell(r,"OEMCode")||key))updates++;
+    if(lvl==="ok")ok++;else if(lvl==="warn")warn++;else err++;
+    res.push({idx,lvl,key,msgs,hbs});
+  });
+  skipped=err;
+  S.validation={rows:res,ok,warn,err,newMasters,updates,skipped};
+}
+let valFilter="all";
+function renderValidation(){
+  const v=S.validation;const sel=$("#profileSel");if(!sel.options.length)sel.innerHTML=Object.entries(PROFILES).map(([k,p])=>`<option value="${k}">${esc(p.label)}</option>`).join("");sel.value=S.profile||"generic";
+  const P=profile();$("#profileNote").innerHTML=`<span>ℹ</span><span><b>${esc(P.label)}</b> — ${esc(P.note)} <span class="muted">Line identity: <span class="mono">${P.key.join(" + ")}</span> · repeats: ${P.dup==="allow"?"allowed":P.dup==="warn"?"warning":"error"}${P.req.length?" · also mandatory: "+P.req.join(", "):""}</span></span>`;
+  $("#valTiles").innerHTML=[["info",fmt(S.rows.length),T("rowsChecked")],["ok",fmt(v.ok),T("clean")],["warn",fmt(v.warn),T("warnings")],["err",fmt(v.err),T("errors")]].map(([c,n,l])=>`<div class="tile ${c}"><div class="v">${n}</div><div class="l">${l}</div></div>`).join("");
+  $$("#valFilter .chip").forEach(c=>c.classList.toggle("on",c.dataset.f===valFilter));
+  const rows=v.rows.filter(r=>valFilter==="all"||r.lvl===valFilter);
+  const fl=k=>(schema().fields.find(f=>f.key===k)||{}).label||k;
+  $("#valTable tbody").innerHTML=rows.length?rows.map(r=>`<tr class="r-${r.lvl}"><td class="num">${r.idx+1}</td><td><span class="pill ${r.lvl}">${r.lvl==="ok"?"Valid":r.lvl==="warn"?"Warning":"Error"}</span></td><td class="mono">${esc(r.key)}</td><td class="small mono">${Object.entries(r.hbs).map(([k,n])=>`${esc(fl(k))}: ${n}`).join("<br>")||'<span class="muted">—</span>'}</td><td class="num">${Math.max(0,RULES.length-r.msgs.length)}/${RULES.length}</td><td style="white-space:normal;min-width:260px">${r.msgs.length?r.msgs.map(m=>`<div class="small" style="color:var(--${m.l})">• ${esc(m.m)}</div>`).join(""):'<span class="muted small">All checks passed</span>'}</td></tr>`).join(""):`<tr><td colspan="5" class="muted">No rows in this filter</td></tr>`;
+  $("#ruleChips").innerHTML=RULES.map(r=>`<span class="chip on">${r.replace("(profile)","("+profile().key.join("+")+")")}</span>`).join("");
+}
+$("#valFilter").addEventListener("click",e=>{const c=e.target.closest(".chip");if(c){valFilter=c.dataset.f;renderValidation()}});
+$("#revalidate").addEventListener("click",()=>{runValidation();render();toast("Validation re-run")});
+$("#profileSel").addEventListener("change",()=>{S.profile=$("#profileSel").value;try{localStorage.setItem("rc_profile_"+S.importType,S.profile)}catch(e){}runValidation();render();toast("Profile: "+profile().label)});
+$("#skipErrors").addEventListener("change",render);
+
+/* ---------- STEP 6: Confirm ---------- */
+function renderConfirm(){
+  const v=S.validation;const importable=v.ok+v.warn;
+  $("#confTiles").innerHTML=[["info",fmt(S.rows.length),T("total")],["ok",fmt(v.ok),T("valid")],["warn",fmt(v.warn),T("warnings")],["err",fmt(v.err),T("errors")],["acc",fmt(v.newMasters),T("newMasters")],["info",fmt(v.updates),T("updates")],["warn",fmt(v.skipped),T("skipped")],["ok",fmt(importable),T("willImport")]].map(([c,n,l])=>`<div class="tile ${c}"><div class="v">${n}</div><div class="l">${l}</div></div>`).join("");
+  const r=regionOf();
+  $("#confSettings").innerHTML=[["Import type",schema().label],["Source",S.file?S.file.name:S.source],["Branch context",brSel.value],["Region / formats",`${r.name} · dates ${dateOrder()} · numbers ${numStyle()} · ${r.cur}`],["Date storage","HBS integer via englishHBS()"],["Industry profile",`${profile().label} · duplicates on ${profile().key.join("+")}: ${profile().dup}`],["Mapped fields",`${Object.keys(S.mapping).length} of ${S.columns.length} columns`],["Masters",Object.entries(S.masterMap).map(([k,m])=>`${k}: ${Object.keys(m).length}`).join(", ")||"—"],["Imported by","msnarayana@retailcliq.com"]].map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+  /* Date & number conversion review */
+  const dateFields=schema().fields.filter(f=>(f.type==="date")&&mappedFieldIndex(f.key)>=0);
+  const numFields=schema().fields.filter(f=>(f.type==="qty"||f.type==="amount")&&mappedFieldIndex(f.key)>=0);
+  const rowsHtml=[];
+  dateFields.forEach(f=>{const i=mappedFieldIndex(f.key);const sample=S.rows.map(rw=>applyTransform(rw[i],i)).find(x=>x!=="")||"";const d=parseDate(sample);const n=HBS.toInt(d);const st=S.colStats[i];
+    rowsHtml.push(`<tr><td><b>${esc(f.label)}</b><div class="small muted">${esc(S.columns[i])}</div></td><td><span class="type-tag">${st.type==="hbsdate"?"HBS integer":dateOrder()}</span></td><td class="mono">${esc(sample)||"—"}</td><td>${d?fmtDate(d)+` <span class="muted small">(${iso(d)})</span>`:'<span class="pill err">invalid</span>'}</td><td class="mono">${n??"—"}</td><td class="mono">${n?HBS.display(n):"—"}</td></tr>`)});
+  numFields.forEach(f=>{const i=mappedFieldIndex(f.key);const sample=S.rows.map(rw=>applyTransform(rw[i],i)).find(x=>x!=="")||"";const n=parseNum(sample);
+    rowsHtml.push(`<tr><td><b>${esc(f.label)}</b><div class="small muted">${esc(S.columns[i])}</div></td><td><span class="type-tag">number · ${numStyle()}</span></td><td class="mono">${esc(sample)||"—"}</td><td class="num">${isNaN(n)?'<span class="pill err">invalid</span>':fmtNum(n,{minimumFractionDigits:2})}</td><td class="mono">${isNaN(n)?"—":n}</td><td class="muted">decimal(18,4)</td></tr>`)});
+  $("#dateConvTable tbody").innerHTML=rowsHtml.join("")||`<tr><td colspan="6" class="muted">No date or numeric fields mapped</td></tr>`;
+  $("#procPreview").textContent=buildProcPlan();
+  $("#dateConvSub").textContent=`${dateFields.length} date field${dateFields.length===1?"":"s"} → HBS · ${numFields.length} numeric field${numFields.length===1?"":"s"}`;
+  const w=$("#confWarn");if(v.err){w.hidden=false;w.innerHTML=`<span>⚠</span><span>${fmt(v.err)} row${v.err>1?"s":""} with errors will be <b>skipped</b>. They are listed in the error report after import so you can fix and re-import only those.</span>`}else w.hidden=true;
+}
+$("#confirmChk").addEventListener("change",render);
+/* Build the T-SQL the import service will run, from the live mapping (mirrors the Profiler capture). */
+function buildProcPlan(){
+  const sc=schema();const v=S.validation;const good=v.rows.filter(r=>r.lvl!=="err");const branchId=brSel.value||"BMS10004";
+  const q=s=>"N'"+String(s).replace(/'/g,"''")+"'";
+  const resolve=(f,val)=>{if(!f.master||!val)return val;const x=(S.masterMap[f.master]||{})[val];return x&&x.mode==="existing"?masterId(f.master,x.to):val};
+  const L=[];
+  const defs=sc.fields.filter(f=>S.defaults[f.key]&&(mappedFieldIndex(f.key)<0||(S.defaults[f.key].mode==="compose"&&S.defaults[f.key].override)));
+  if(defs.length){L.push(`-- 0. Columns not in the source file — filled by rule (same value logic runs server-side):`);defs.forEach(f=>{const d=S.defaults[f.key];const lbl=(DEF_MODES.find(m=>m[0]===d.mode)||[])[1]||d.mode;L.push(`--    ${f.key.padEnd(22)} ${lbl}${d.value?" = "+d.value:""}`)});L.push(``)}
+  const SL=supplierList();const newS=SL.filter(x=>x.status==="new");
+  if(S.source==="rc"&&$("#rcCopyMasters").value==="copy"){L.push(`-- 0a. RetailCLIQ → RetailCLIQ: copy master tables as-is (same ids) before anything else`);["DivisionMaster","DepartmentMaster","CategoryMaster","SubCategoryMaster","StyleMaster","DesignMaster","SizeMaster","ColorMaster","BrandMaster","UOMMaster","Tax_Master","vendormaster"].forEach(t=>L.push(`INSERT INTO ${t} SELECT * FROM [${$("#rcDb").value||"SRC_DB"}].dbo.${t} s WHERE NOT EXISTS (SELECT 1 FROM ${t} t WHERE t.${MASTER_TABLES[t].id}=s.${MASTER_TABLES[t].id});`));L.push(``)}
+  if(newS.length||SL.some(x=>x.outstanding)){L.push(`-- 0b. Suppliers (${newS.length} new, ${SL.length-newS.length} existing) — vendormaster + M_GeneralLedger under '${$("#supGroup").value}'`);
+    newS.slice(0,3).forEach(x=>{L.push(`exec proc_VendorInsert @CompId='C001', @vend_name=${q(x.name)}, @GSTIN=${q(x.gstin||"")}, @Mobile=${q(x.mobile||"")}, @City=${q(x.city||"")}, @Credit_Days=${+x.creditDays||0}, @vend_uid=@vend_uid output;   -- verify proc name`);
+      if($("#supCreateLedger").checked)L.push(`insert into M_GeneralLedger (GlId, GLName, GlType, GroupName, compid, OpeningBal, OpeningDrCr, OBDate) values (@vend_uid, ${q(x.name)}, '${$("#supGlType").value}', ${q($("#supGroup").value)}, 'C001', ${x.outstanding||0}, '${x.drcr}', ${HBS.toInt(parseDate($("#supObDate").value))});   -- verify column names`)});
+    if(newS.length>3)L.push(`-- … ${newS.length-3} more suppliers`);L.push(``)}
+  L.push(`-- 1. HBS conversion of every date column (one call per distinct date, cached)`);
+  const dates=new Set();good.slice(0,50).forEach(r=>sc.fields.filter(f=>f.type==="date").forEach(f=>{const d=parseDate(cell(S.rows[r.idx],f.key));if(d)dates.add(iso(d))}));
+  [...dates].slice(0,3).forEach(d=>{const dd=d.split("-");L.push(`declare @p1 nvarchar(20); set @p1=N'${dd[2]}-${dd[1]}-${dd[0]}'; exec sp_englishHBS @DateValue=@p1 output;  -- → ${HBS.toInt(parseDate(d))}`)});
+  if(dates.size>3)L.push(`-- … ${dates.size-3} more distinct dates`);
+  if(sc.proc){
+    L.push(``,`-- 2. Clear and fill the staging table (${good.length} rows, ${v.err} skipped)`,`DELETE FROM Stock_Import_Export;`);
+    const cols=STAGING_COLS.filter(c=>!c.inferred).map(c=>c.key);
+    L.push(`insert bulk [Stock_Import_Export] (${cols.map(c=>"["+c+"]").join(", ")})`);
+    good.slice(0,2).forEach((r,n)=>{const vals=cols.map(c=>{const f=sc.fields.find(x=>x.key===c);const row=S.rows[r.idx];let val=c==="SlNo"?String(n+1):resolve(f,cell(row,c));if(f&&f.type==="date"){const d=parseDate(val);val=d?String(HBS.toInt(d)):val}return q(val||"")});L.push(`  -- row ${r.idx+1}: (${vals.slice(0,8).join(", ")}, …)`)});
+    L.push(``,`-- 3. Post via procedure (GST XML built from Verticle1/HSN per row)`);
+    const gst=good.slice(0,3).map((r,n)=>`<GST_ITEMS SlNo="${n+1}" Itemcode="${esc(cell(S.rows[r.idx],"ItemCode")||cell(S.rows[r.idx],"OEMCode"))}" HSNCode="${esc(cellRole(S.rows[r.idx],"hsn"))}" CGST_Per="0" CGST_Amt="0" SGST_Per="0" SGST_Amt="0" IGST_Per="0" IGST_Amt="0" UTGST_Per="0" UTGST_Amt="0"/>`).join("");
+    L.push(`declare @MRNo nvarchar(100), @GSTXml xml;`,`set @GSTXml = convert(xml, N'<GST>${gst}${good.length>3?"…":""}</GST>');`,
+      `exec proc_StockImportwithSupplier @CompId='C001', @UserId='U10001', @BranchId='${branchId}', @PurchaseAccount='${masterId("M_GeneralLedger",(MASTERS.M_GeneralLedger||[])[0])}', @MRNo=@MRNo output, @GSTXml=@GSTXml;`,`select @MRNo;  -- e.g. 4827030001 - 4827030004 → saved to audit as Batch reference`);
+  }else{
+    L.push(``,`-- 2. MERGE into ${sc.table} (${good.length} rows) — key: ${(sc.fields.find(f=>f.dupKey||f.req)||{}).key}`);
+    const r0=good[0]&&S.rows[good[0].idx];if(r0){const cols=sc.fields.filter(f=>mappedFieldIndex(f.key)>=0);L.push(`MERGE ${sc.table} AS t USING (VALUES (${cols.map(f=>{let val=resolve(f,cell(r0,f.key));if(f.type==="date"){const d=parseDate(val);val=d?HBS.toInt(d):null}return f.type==="date"||f.type==="qty"||f.type==="amount"?(val===""||val==null?"NULL":val):q(val)}).join(", ")})) AS s(${cols.map(f=>f.key).join(", ")})`,`  ON t.${cols[0].key} = s.${cols[0].key}`,`WHEN MATCHED THEN UPDATE SET ${cols.slice(1,4).map(f=>`t.${f.key}=s.${f.key}`).join(", ")}, …`,`WHEN NOT MATCHED THEN INSERT (${cols.map(f=>f.key).join(", ")}) VALUES (${cols.map(f=>"s."+f.key).join(", ")});`)}
+  }
+  L.push(``,`-- 4. Audit: insert into ImportBatchLog (BatchId, ImportType, ImportedBy, StartedOn(HBS), Region, RowsOk, RowsFailed, RowsSkipped, Remarks)`);
+  return L.join("\n");
+}
+$("#copyProc").addEventListener("click",()=>copyText($("#procPreview").textContent,"T-SQL plan"));
+
+/* ---------- STEP 7: Import ---------- */
+function log(cls,m){const t=new Date().toLocaleTimeString("en-IN",{hour12:false});S.imp.log.push({cls,m:`[${t}] ${m}`});const el=$("#impLog");el.innerHTML=S.imp.log.slice(-200).map(x=>`<div class="${x.cls}">${esc(x.m)}</div>`).join("");el.scrollTop=el.scrollHeight}
+function startImport(){
+  if(API.on)return realImport();
+  const I=S.imp;Object.assign(I,{running:true,paused:false,cancelled:false,i:0,ok:0,fail:0,skip:0,log:[],batch:"IMP-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,6).toUpperCase(),started:new Date()});
+  $("#impLog").innerHTML="";$("#pauseBtn").textContent="Pause";$("#pauseBtn").disabled=false;$("#cancelBtn").disabled=false;$("#prog").className="prog";
+  log("s",`Batch ${I.batch} started · ${schema().label} · ${S.rows.length} rows · policy=${$("#dupPolicy").value}`);
+  const nm=S.validation.newMasters;if(nm){log("",`Creating ${nm} new master record(s)…`)}
+  tick();render();
+}
+const CHUNK=()=>Math.max(1,Math.ceil(S.rows.length/12));
+function tick(){
+  const I=S.imp;if(I.cancelled||I.paused)return;
+  if(I.i>=S.rows.length){finishImport();return}
+  const end=Math.min(S.rows.length,I.i+CHUNK());const chunkNo=Math.floor(I.i/CHUNK())+1;
+  log("",`Chunk ${chunkNo}: rows ${I.i+1}–${end} → bulk insert staging (BatchId=${I.batch}) → post`);
+  while(I.i<end)processRow();
+  I.chunks=(I.chunks||0)+1;log("s",`Chunk ${chunkNo} committed · checkpoint ImportBatchLog(${I.batch}, ${chunkNo})`);
+  renderProgress();I.timer=setTimeout(tick,250+Math.random()*250);
+}
+function processRow(){
+  const I=S.imp;
+  const r=S.validation.rows[I.i];const policy=$("#dupPolicy").value;
+  if(r.lvl==="err"){I.skip++;log("w",`Row ${r.idx+1} skipped: ${r.msgs[0].m}`)}
+  else if(Math.random()<0.03){I.fail++;r.runtime="Timeout writing to MSSQL (deadlock retry exhausted)";log("e",`Row ${r.idx+1} failed: ${r.runtime}`)}
+  else{I.ok++;const upd=itemExists(cell(S.rows[r.idx],"ItemCode"),cell(S.rows[r.idx],"OEMCode")||r.key);if(upd&&policy==="skip"){I.ok--;I.skip++;r.runtime="Exists, skipped by policy";log("w",`Row ${r.idx+1} exists, skipped by policy`)}else{const h=Object.entries(r.hbs).map(([k,n])=>`${k}=${n}`).join(" ");log(r.lvl==="warn"?"w":"",`Row ${r.idx+1} ${upd&&policy==="update"?"updated":"inserted"} ${r.key}${h?"  ["+h+"]":""}`)}}
+  I.i++;
+}
+function renderProgress(){const I=S.imp;const n=S.rows.length;const p=n?I.i/n:1;$("#prog i").style.width=(p*100)+"%";$("#impPct").textContent=Math.round(p*100)+"%";$("#impCount").textContent=`${fmt(I.i)} / ${fmt(n)}`;
+  $("#impStatus").textContent=I.cancelled?"Cancelled":I.paused?"Paused":I.i>=n?"Finalising…":`Processing row ${I.i+1}…`;
+  const el=I.started?(Date.now()-I.started)/1000:0;const rps=el>0?Math.round(I.i/el):0;
+  $("#impEta").textContent=I.i<n&&!I.paused&&!I.cancelled?`${fmt(rps)} rows/s (demo) · ~${Math.ceil((n-I.i)/Math.max(rps,1))} s remaining`:"";
+  $("#impPhases").innerHTML=["Stream-validate","Bulk load staging","Set-based post","Reconcile"].map((ph,k)=>{const done=I.i>=n?4:Math.min(3,Math.floor(p*4));return`<span class="pill ${k<done?"ok":k===done?"info":"n"}">${k+1}. ${ph}</span>`}).join("");
+  $("#impTiles").innerHTML=[["info",fmt(I.i),T("processed")],["ok",fmt(I.ok),T("successful")],["err",fmt(I.fail),T("failed")],["warn",fmt(I.skip),T("skippedS")]].map(([c,v,l])=>`<div class="tile ${c}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("")}
+function finishImport(){const I=S.imp;I.running=false;I.ended=new Date();$("#prog").classList.add(I.cancelled?"paused":"done");$("#pauseBtn").disabled=true;$("#cancelBtn").disabled=true;
+  if(!I.cancelled)log("",`Reconciliation: staging vs Invtransaction for ${I.batch} — rows ${I.ok}/${I.ok}, SUM(Qty) match, SUM(Qty*Rate) match → batch marked Posted`);
+  log("s",`Batch ${I.batch} ${I.cancelled?"cancelled at chunk boundary":"completed"} · ${I.ok} ok · ${I.fail} failed · ${I.skip} skipped · ${I.chunks||0} chunk(s) committed`);renderProgress();render();toast(I.cancelled?"Import cancelled":"Import completed");setTimeout(()=>go(9),600)}
+$("#pauseBtn").addEventListener("click",()=>{const I=S.imp;if(!I.running)return;I.paused=!I.paused;$("#pauseBtn").textContent=I.paused?"Resume":"Pause";$("#prog").classList.toggle("paused",I.paused);log("w",I.paused?"Paused by user":"Resumed");renderProgress();if(!I.paused)tick()});
+$("#cancelBtn").addEventListener("click",()=>{const I=S.imp;if(!I.running)return;I.cancelled=true;clearTimeout(I.timer);finishImport()});
+
+/* ---------- STEP 8: Result ---------- */
+function renderResult(){
+  const I=S.imp,v=S.validation;const cancelled=I.cancelled;
+  $("#resTitle").textContent=cancelled?"Import cancelled":I.fail?"Import completed with failures":"Import completed";
+  $("#resSub").textContent=`${schema().label} · ${S.file?S.file.name:S.source}`;
+  const a=$("#resAlert");a.className="alert "+(cancelled?"warn":I.fail?"warn":"ok");a.innerHTML=`<span>${cancelled?"⚠":I.fail?"⚠":"✓"}</span><span><b>${fmt(I.ok)}</b> of <b>${fmt(S.rows.length)}</b> records written to RetailCLIQ${I.fail?`, <b>${fmt(I.fail)}</b> failed`:""}${I.skip?`, <b>${fmt(I.skip)}</b> skipped`:""}.${cancelled?` Processing stopped at row ${I.i}; the remaining ${fmt(S.rows.length-I.i)} were not touched.`:""}</span>`;
+  $("#resTiles").innerHTML=[["ok",fmt(I.ok),T("successful")],["err",fmt(I.fail),T("failed")],["warn",fmt(I.skip),T("skippedS")],["acc",fmt(v.newMasters),T("mastersCreated")]].map(([c,n,l])=>`<div class="tile ${c}"><div class="v">${n}</div><div class="l">${l}</div></div>`).join("");
+  const dur=I.ended&&I.started?((I.ended-I.started)/1000).toFixed(1)+" s":"—";
+  const rg=regionOf();const lts=d=>{try{return d.toLocaleString(G.region,{timeZone:rg.tz,dateStyle:"medium",timeStyle:"medium"})}catch(e){return d.toLocaleString()}};
+  const todayHbs=HBS.toInt(new Date(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())));
+  $("#auditKv").innerHTML=[["Batch ID",`<span class="mono">${I.batch}</span>`],["Import type",schema().label],["Imported by","msnarayana@retailcliq.com"],["Branch context",esc(brSel.value)],["Region / formats",`${esc(rg.name)} · ${dateOrder()} · ${numStyle()}`],["Started",I.started?lts(I.started):"—"],["Finished",I.ended?lts(I.ended):"—"],["Import date (HBS)",`<span class="mono">${todayHbs}</span> <span class="muted small">= ${HBS.display(todayHbs)}</span>`],["Duration",dur],["Posting",esc($("#postMode").value)],["Duplicate policy",esc($("#dupPolicy").options[$("#dupPolicy").selectedIndex].text)],["Remarks",esc($("#remarks").value)||"—"],["Status",`<span class="pill ${cancelled?"warn":"ok"}">${cancelled?"Cancelled":"Committed"}</span>`]].map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("");
+  const rb=schema().rollback;$("#rbText").textContent=rb?"Reversal is supported for this import type. Rolling back removes every record this batch created and restores updated records to their previous values.":"Reversal is not supported for posted transactions. Use a credit/debit note or a reversal voucher instead.";$("#rbBtn").disabled=!rb||I.ok===0||I.rolledBack;$("#rbBtn").textContent=I.rolledBack?"Batch rolled back":"Rollback this batch";
+  const bad=v.rows.filter(r=>r.lvl==="err"||r.runtime).slice(0,I.i);
+  $("#errCount").textContent=`${bad.length} row${bad.length===1?"":"s"}`;
+  $("#errTable tbody").innerHTML=bad.length?bad.map(r=>`<tr class="r-${r.lvl==="err"?"err":"warn"}"><td class="num">${r.idx+1}</td><td><span class="pill ${r.lvl==="err"?"warn":"err"}">${r.lvl==="err"?"Skipped":"Failed"}</span></td><td class="mono">${esc(r.key)}</td><td style="white-space:normal;min-width:260px">${esc(r.runtime||r.msgs.map(m=>m.m).join("; "))}</td></tr>`).join(""):`<tr><td colspan="4" class="muted">No failed or skipped rows</td></tr>`;
+  $("#resLog").innerHTML=I.log.map(x=>`<div class="${x.cls}">${esc(x.m)}</div>`).join("");
+}
+function copyText(t,label){const done=()=>toast(label+" copied to clipboard");if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>fallback())}else fallback();function fallback(){const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done()}catch(e){toast("Select and copy the log manually")}document.body.removeChild(ta)}}
+$("#copyErrors").addEventListener("click",()=>{if(API.on&&S.imp.batch){fetch(`${API.base}/import/${S.imp.batch}/errors`).then(r=>r.text()).then(t=>copyText(t,"Server error report (CSV)"));return}const v=S.validation;const lines=["Row,Outcome,Key,Reason,HBS dates,"+S.columns.join(",")];v.rows.filter(r=>r.lvl==="err"||r.runtime).forEach(r=>lines.push([r.idx+1,r.runtime?"Failed":"Skipped",r.key,'"'+(r.runtime||r.msgs.map(m=>m.m).join("; ")).replace(/"/g,'""')+'"','"'+Object.entries(r.hbs).map(([k,n])=>k+"="+n).join(" ")+'"',...S.rows[r.idx].map(c=>'"'+c.replace(/"/g,'""')+'"')].join(",")));copyText(lines.join("\n"),"Error report (CSV)")});
+$("#copyLog").addEventListener("click",()=>copyText(S.imp.log.map(x=>x.m).join("\n"),"Import log"));
+$("#rbBtn").addEventListener("click",()=>{$("#rbConfirm").hidden=false;$("#rbBatch").textContent=S.imp.batch;$("#rbInput").value="";$("#rbGo").disabled=true;$("#rbInput").focus()});
+$("#rbInput").addEventListener("input",()=>{$("#rbGo").disabled=$("#rbInput").value.trim()!=="ROLLBACK"});
+$("#rbNo").addEventListener("click",()=>{$("#rbConfirm").hidden=true});
+$("#rbGo").addEventListener("click",()=>{const I=S.imp;
+  if(API.on){$("#rbGo").disabled=true;fetch(`${API.base}/import/${I.batch}/rollback`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:API.user,reason:"Rolled back from wizard"})}).then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);I.rolledBack=true;$("#rbConfirm").hidden=true;log("w",`Rollback executed: batch ${I.batch} now ${j.batch.Status}`);I.ok=0;renderResult();toast("Batch rolled back in "+API.health.dbNew)}).catch(e=>toast("Rollback failed: "+e.message));return}
+  I.rolledBack=true;$("#rbConfirm").hidden=true;log("w",`Rollback executed for ${I.batch}: ${I.ok} record(s) reversed by msnarayana@retailcliq.com`);I.ok=0;renderResult();toast("Batch rolled back")});
+
+/* ---------- Live API layer (present when served by the Node service) ---------- */
+const API={base:"/api",on:false,health:null,user:"U10001"};
+const RESOLVE_COLS=[...STAGING_COLS.map(c=>c.key)];
+function resolvedRow(row){const sc=schema();const o={};RESOLVE_COLS.forEach(c=>{const f=sc.fields.find(x=>x.key===c);let v=f?cell(row,c):"";if(f&&f.master&&v){const x=(S.masterMap[f.master]||{})[v];if(x&&x.mode==="existing")v=masterId(f.master,x.to);else if(x&&x.mode==="new")v=x.to}o[c]=v});return o}
+async function apiJson(path,body){const r=await fetch(API.base+path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);const j=await r.json();if(j.error)throw new Error(j.error);return j}
+async function apiInit(){
+  try{const h=await (await fetch(API.base+"/health")).json();API.health=h;if(!h.connected){$("#apiPill").textContent="server up · DB not connected";$("#apiPill").className="pill warn";$("#apiPill").title=h.error||"";return}
+    API.on=true;API.user=h.defaultUser||"U10001";$("#apiPill").textContent=`live · ${h.dbNew}${h.frameworkProcs?"":" · framework not deployed"}`;$("#apiPill").className=h.frameworkProcs?"pill ok":"pill warn";
+    const m=await apiJson("/masters");let n=0;Object.entries(m.masters).forEach(([t,x])=>{if(!MASTER_TABLES[t])return;if(x.rows.length){MASTER_TABLES[t].rows=x.rows.map(r=>[r[0],r[1]||r[0],r[2]||""]);MASTER_TABLES[t].inferred=false;n++}else if(x.error){MASTER_TABLES[t].sql+="  -- LIVE ERROR: "+x.error}});
+    Object.entries(MASTER_TABLES).forEach(([k,mt])=>{MASTERS[k]=mt.rows.map(r=>r[0]===r[1]?r[0]:`${r[1]} [${r[0]}]`)});
+    brSel.innerHTML="";MASTER_TABLES.BranchMaster.rows.forEach(r=>{const o=document.createElement("option");o.value=r[0];o.textContent=`${r[1]} [${r[0]}]`;brSel.appendChild(o)});
+    $("#purAcc").innerHTML=(MASTERS.M_GeneralLedger||[]).map(o=>`<option value="${esc(masterId("M_GeneralLedger",o))}">${esc(o)}</option>`).join("");
+    const sch=await apiJson("/schema");sch.objects.forEach(obj=>{let t=CATALOG.find(x=>x.name.toLowerCase()===obj.name.toLowerCase());if(!t){t={name:obj.name,kind:obj.kind,desc:"Live from INFORMATION_SCHEMA",cols:[],deps:[]};CATALOG.push(t)}
+      const old=t.cols;t.cols=obj.cols.map(c=>{const prev=old.find(o=>o.key.toLowerCase()===c.key.toLowerCase());return Object.assign(prev?Object.assign({},prev):C(c.key),{key:c.key,sql:c.sql+(c.fk?"  FK → "+c.fk:""),inferred:false})});t.desc+=` · live (${obj.cols.length} columns)`});
+    $("#schemaSrc").value="live";toast(`Live: ${n} master tables and ${sch.objects.length} schema objects loaded from ${h.dbNew}`);
+    if(!$("#purAcc").options.length)$("#purAcc").innerHTML=`<option value="">— no purchase ledger found —</option>`;
+  }catch(e){/* static hosting: stay in demo mode */}
+  renderSource();render();
+}
+if(!$("#purAcc").options.length)$("#purAcc").innerHTML=(MASTERS.M_GeneralLedger||[]).map(o=>`<option value="${esc(masterId("M_GeneralLedger",o))}">${esc(o)}</option>`).join("");
+async function realImport(){
+  const I=S.imp;const v=S.validation;const good=v.rows.filter(r=>r.lvl!=="err");
+  Object.assign(I,{running:true,paused:false,cancelled:false,i:0,ok:0,fail:0,skip:v.err,log:[],batch:"",started:new Date(),chunks:0});
+  $("#impLog").innerHTML="";$("#pauseBtn").disabled=true;$("#cancelBtn").disabled=false;$("#prog").className="prog";$("#impSub").innerHTML=`Live import into <b>${esc(API.health.dbNew)}</b>: rows are bulk-inserted into Stock_Import_Export with a BatchId, validated set-based by proc_Import_Validate, posted chunk by chunk by proc_Import_Post (each chunk one transaction, traced for rollback) and reconciled.`;
+  const P=profile();
+  try{
+    const b=await apiJson("/import/begin",{importType:S.importType.toUpperCase(),branchId:brSel.value,userId:API.user,source:S.file?S.file.name:S.source,purchaseAccount:$("#purAcc").value||null,dateOrder:dateOrder()==="HBS"||dateOrder()==="EXCEL"?"DMY":dateOrder()==="DMMMY"?"DMY":dateOrder(),numberStyle:numStyle()==="comma"?"COMMA":"DOT",region:G.region,dupKeyColumns:P.key.join(","),dupMode:P.dup.toUpperCase(),dbMode:S.dbMode.toUpperCase(),chunkSize:+$("#chunkSize").value,remarks:$("#remarks").value});
+    I.batch=b.batchId;log("s",`Batch ${I.batch} opened (proc_Import_Begin)`);render();
+    const SL=5000;let next=1;for(let i=0;i<good.length;i+=SL){const slice=good.slice(i,i+SL).map(r=>resolvedRow(S.rows[r.idx]));const j=await apiJson(`/import/${I.batch}/rows`,{rows:slice,startRow:next});next=j.nextRow;I.i=Math.min(good.length,i+SL);$("#impStatus").textContent=`Staging rows ${fmt(I.i)} / ${fmt(good.length)}…`;$("#impCount").textContent=`${fmt(I.i)} / ${fmt(good.length)}`;$("#prog i").style.width=(I.i/good.length*30)+"%";$("#impPct").textContent=Math.round(I.i/good.length*30)+"%"}
+    log("s",`${fmt(good.length)} rows bulk-inserted into Stock_Import_Export`);
+    const val=await apiJson(`/import/${I.batch}/validate`);log(val.RowsError?"w":"s",`Server validation: ${val.RowsValid} valid · ${val.RowsWarn} warnings · ${val.RowsError} errors · ${val.Chunks} chunk(s)`);I.skip+=val.RowsError||0;
+    if(!val.Chunks){throw new Error("No importable rows after server validation — download the error report")}
+    if($("#postMode").value.startsWith("Save")){log("w","Saved as draft: staged and validated, not posted. Resume later from the batch list.");I.running=false;I.i=good.length;finishLive({Status:"Validated",RowsPosted:0});return}
+    await apiJson(`/import/${I.batch}/post`);log("",`proc_Import_Post started in the background (chunk size ${$("#chunkSize").value})`);
+    const total=val.Chunks;let lastCommitted=-1;
+    while(true){await new Promise(r=>setTimeout(r,1000));const st=await apiJson(`/import/${I.batch}/status`);const B=st.batch;const comm=st.chunks.filter(c=>c.Status==="Committed").length;
+      st.chunks.forEach(c=>{if(c.Status==="Committed"&&c.ChunkNo>lastCommitted){lastCommitted=c.ChunkNo;log("s",`Chunk ${c.ChunkNo} committed · rows ${c.FromRow}–${c.ToRow} · ${c.RowsOk} ok${c.MRNo?" · MRNo "+c.MRNo:""}`)}if(c.Status==="Failed"&&c.ErrorMsg)log("e",`Chunk ${c.ChunkNo} failed: ${c.ErrorMsg}`)});
+      const p=0.3+0.65*(comm/total);$("#prog i").style.width=(p*100)+"%";$("#impPct").textContent=Math.round(p*100)+"%";$("#impStatus").textContent=`${B.Status} · chunk ${Math.min(comm+1,total)} of ${total}`;$("#impCount").textContent=`${fmt(B.RowsCommitted||0)} / ${fmt(good.length)}`;I.chunks=comm;I.ok=B.RowsCommitted||0;
+      $("#impPhases").innerHTML=["Stream-validate","Bulk load staging","Set-based post","Reconcile"].map((ph,k)=>{const done=B.Status==="Reconciled"?4:B.Status==="Posted"?3:2;return`<span class="pill ${k<done?"ok":k===done?"info":"n"}">${k+1}. ${ph}</span>`}).join("");
+      if(["Reconciled","Failed","Cancelled","RolledBack"].includes(B.Status)||(st.job&&!st.job.running&&B.Status!=="Posting")){if(st.job&&st.job.error)log("e",st.job.error);if(B.LastError)log("e",B.LastError);I.i=good.length;finishLive(B);return}
+    }
+  }catch(e){log("e","Import stopped: "+e.message);I.running=false;I.fail=I.fail||0;$("#prog").classList.add("paused");$("#cancelBtn").disabled=true;toast("Import stopped: "+e.message);render()}
+}
+function finishLive(B){const I=S.imp;I.running=false;I.ended=new Date();I.ok=B.RowsPosted||I.ok;I.cancelled=B.Status==="Cancelled";$("#prog i").style.width="100%";$("#impPct").textContent="100%";$("#prog").classList.add(B.Status==="Reconciled"?"done":"paused");$("#cancelBtn").disabled=true;
+  log(B.Status==="Reconciled"?"s":"w",`Batch ${I.batch} ${B.Status}${B.MRNo?" · MRNo "+B.MRNo:""}`);render();toast("Batch "+B.Status);setTimeout(()=>go(9),600)}
+$("#cancelBtn").addEventListener("click",()=>{if(API.on&&S.imp.running&&S.imp.batch){apiJson(`/import/${S.imp.batch}/cancel`,{userId:API.user}).then(()=>log("w","Cancel requested — stops at the next chunk boundary")).catch(e=>toast(e.message))}});
+
+/* ---------- Boot ---------- */
+applyI18n();renderSource();render();apiInit();
+/* expose for quick console checks: RC.HBS.toInt(new Date(Date.UTC(2026,3,1))) */
+window.RC={HBS,parseDate,parseNum,REGIONS};
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "retailcliq-universal-import",
+  "version": "1.0.0",
+  "description": "RetailCLIQ Universal Import — 9-step wizard + Node/Express/MSSQL batch import service",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "db:check": "node scripts/check-db.js",
+    "db:deploy": "node scripts/deploy-sql.js sql/01_batch_framework.sql",
+    "db:smoke": "node scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "mssql": "^11.0.1",
+    "multer": "^1.4.5-lts.1"
+  },
+  "engines": { "node": ">=18" }
+}

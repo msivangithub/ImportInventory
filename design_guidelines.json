@@ -1,0 +1,93 @@
+{
+  "project_info": {
+    "app_type": "saas_app",
+    "theme": "light",
+    "design_archetype": "Swiss & High-Contrast / Enterprise Data-Dense SaaS",
+    "target_audience": "Retail chain finance and store-operations staff performing opening-stock migration from legacy ERP or RetailCLIQ systems"
+  },
+  "typography": {
+    "font_family_heading": "Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "font_family_body": "IBM Plex Sans, -apple-system, BlinkMacSystemFont, sans-serif",
+    "font_family_mono": "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+    "scale": {
+      "h1": "text-2xl sm:text-3xl font-bold tracking-tight text-slate-900",
+      "h2": "text-xl sm:text-2xl font-semibold tracking-tight text-slate-900",
+      "h3": "text-lg font-semibold text-slate-900",
+      "h4": "text-base font-medium text-slate-800",
+      "body": "text-sm text-slate-700 leading-normal",
+      "body_small": "text-xs text-slate-500 leading-tight",
+      "mono_data": "font-mono text-xs text-slate-800 tracking-wide"
+    }
+  },
+  "colors": {
+    "background_primary": "#F8FAFC",
+    "background_card": "#FFFFFF",
+    "border_default": "#E2E8F0",
+    "border_strong": "#CBD5E1",
+    "text_primary": "#0F172A",
+    "text_secondary": "#475569",
+    "text_muted": "#64748B",
+    "primary_brand": "#0F172A",
+    "primary_brand_accent": "#2563EB",
+    "status_badges": {
+      "Staging": "bg-slate-100 text-slate-700 border-slate-300 font-medium",
+      "Validated": "bg-blue-50 text-blue-700 border-blue-200 font-medium",
+      "Posting": "bg-amber-50 text-amber-800 border-amber-300 font-medium animate-pulse",
+      "Posted": "bg-emerald-50 text-emerald-700 border-emerald-300 font-medium",
+      "Reconciled": "bg-emerald-100 text-emerald-800 border-emerald-400 font-medium",
+      "Failed": "bg-rose-50 text-rose-700 border-rose-300 font-medium",
+      "Cancelled": "bg-slate-100 text-slate-600 border-slate-200 font-medium",
+      "RolledBack": "bg-orange-50 text-orange-700 border-orange-300 font-medium"
+    },
+    "preflight_badges": {
+      "PASS": "bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold",
+      "FAIL": "bg-rose-100 text-rose-800 border-rose-300 font-semibold",
+      "WARN": "bg-amber-100 text-amber-800 border-amber-300 font-semibold",
+      "PHASE2": "bg-purple-100 text-purple-800 border-purple-300 font-semibold"
+    }
+  },
+  "layout_and_density": {
+    "container_padding": "p-4 sm:p-6 lg:p-8",
+    "card_style": "bg-white rounded-lg border border-slate-200 shadow-sm p-5",
+    "table_style": "w-full text-left text-xs border-collapse divide-y divide-slate-200",
+    "header_style": "sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 px-6 py-3 flex items-center justify-between",
+    "sticky_stepper_style": "sticky top-[57px] z-20 bg-slate-50 border-b border-slate-200 py-3 px-6 shadow-xs"
+  },
+  "key_pages_and_components": {
+    "login_page": {
+      "description": "Tenant login with tenant ID, store/branch scope selection, username/password, and system status indicator",
+      "test_ids": ["login-tenant-input", "login-username-input", "login-password-input", "login-submit-button"]
+    },
+    "dashboard": {
+      "description": "Enterprise overview with counter metrics (Total Batches, Rows Posted Today, Overall Error Rate, Active Staging Jobs) + Batch History Table with status filters and quick actions",
+      "test_ids": ["dashboard-counter-total-batches", "dashboard-counter-rows-posted", "dashboard-counter-error-rate", "dashboard-batch-table", "new-import-btn"]
+    },
+    "new_import_wizard": {
+      "description": "5-step gate-locked stepper: 1. Configure (ERP Source, Store Target, Mode) -> 2. Upload CSV/Excel -> 3. Validate (Schema & Sanity checks) -> 4. Gate (Pre-flight Check Panel) -> 5. Post & Reconcile (Chunk processing progress)",
+      "test_ids": ["wizard-stepper", "wizard-step-1-next", "wizard-upload-dropzone", "wizard-run-validation-btn", "wizard-gate-proceed-btn", "wizard-post-batch-btn"]
+    },
+    "batch_detail_page": {
+      "description": "Comprehensive batch breakdown with header summary, progress meter, chunk status grid (batch divided into processing chunks), and Phase 2 post-reconciliation audit status",
+      "test_ids": ["batch-detail-header", "chunk-grid-container", "phase2-tracker-panel", "rollback-batch-btn"]
+    },
+    "validation_error_viewer": {
+      "description": "Filterable/sortable error log table with inline expandable rows showing exact row number, field name, legacy value, error reason, and downloadable CSV button",
+      "test_ids": ["error-viewer-table", "error-filter-select", "error-export-csv-btn", "error-row-expand-btn"]
+    },
+    "preflight_check_panel": {
+      "description": "Gate step pre-flight validator running automated checks (Store SKU Mapping, Negative Stock Guards, Ledger Mapping, Legacy Batch Duplication) returning PASS/FAIL/WARN/PHASE2 status badges before enabling Post action",
+      "test_ids": ["preflight-panel", "preflight-check-item", "preflight-recheck-btn"]
+    }
+  },
+  "interactive_rules": {
+    "destructive_actions": "All destructive actions (e.g. Rollback Batch, Cancel Import, Delete Draft Staging) MUST require typed confirmation modal (e.g. prompt user to type 'ROLLBACK' or the batch code like 'BAT-2026-0042').",
+    "gate_locking": "Wizard steps 3, 4, and 5 are strictly gate-locked until preceding step returns PASS or user explicitly acknowledges WARN conditions.",
+    "hover_states": "Interactive table rows must have hover:bg-slate-50 transition-colors. Buttons must have explicit hover background and text color contrasts.",
+    "toast_notifications": "Use Sonner toast notifications for async validation completions, batch posting triggers, error exports, and confirmation steps."
+  },
+  "universal_guidelines": {
+    "test_attributes": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case.",
+    "file_type": "JavaScript (.js) components only in src/components/ and src/pages/.",
+    "icons": "Use lucide-react icons for all UI indicators (CheckCircle2, AlertTriangle, XCircle, ArrowRight, UploadCloud, RefreshCw, FileSpreadsheet, ShieldAlert, Database, Layers)."
+  }
+}

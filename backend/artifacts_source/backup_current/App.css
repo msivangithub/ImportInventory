@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ── RetailCLIQ Universal Import — design system ───────────────────────────
+   Mirrors the original index.html CSS variables exactly.
+   Accent: #0f6e74  Background: #f3f5f7  Surface: #ffffff
+   ──────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --rc-bg:           #f3f5f7;
+  --rc-surface:      #ffffff;
+  --rc-surface-2:    #e9edf1;
+  --rc-line:         #d3dae1;
+  --rc-line-strong:  #aab5c0;
+  --rc-fg:           #15202b;
+  --rc-fg-2:         #4b5a68;
+  --rc-fg-3:         #7b8894;
+  --rc-accent:       #0f6e74;
+  --rc-accent-fg:    #ffffff;
+  --rc-accent-soft:  #dcf1f1;
+  --rc-ok:           #1f7a3c;
+  --rc-ok-soft:      #dff3e5;
+  --rc-warn:         #a4620a;
+  --rc-warn-soft:    #fbeed3;
+  --rc-err:          #b42323;
+  --rc-err-soft:     #fbe1e1;
+  --rc-info:         #2457a8;
+  --rc-info-soft:    #e0eafb;
+  --rc-radius:       6px;
+  --rc-shadow:       0 1px 2px rgba(21,32,43,.06), 0 4px 14px rgba(21,32,43,.06);
+  --font-body:       "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:       "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font: 14px/1.45 var(--font-body);
+  background: var(--rc-bg);
+  color: var(--rc-fg);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, h5 { margin: 0; font-family: var(--font-body); line-height: 1.25; }
+h2 { font-size: 18px; font-weight: 600; }
+h3 { font-size: 14px; font-weight: 600; }
+p  { margin: 0; }
+
+/* ── Wizard-specific scrollbar ─────────────────────────────────────────── */
+.rc-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.rc-scrollbar::-webkit-scrollbar-track { background: var(--rc-surface-2); }
+.rc-scrollbar::-webkit-scrollbar-thumb { background: var(--rc-line-strong); border-radius: 3px; }
+.rc-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--rc-fg-3); }
+
+/* ── Wizard stepper ─────────────────────────────────────────────────────── */
+.wz-step-connector { height: 2px; background: var(--rc-line); flex: 1; margin: 0 6px; margin-top: 12px; border-radius: 1px; transition: background .25s; }
+.wz-step-connector.done { background: var(--rc-accent); }
+
+/* ── Source-type card ───────────────────────────────────────────────────── */
+.src-card {
+  background: var(--rc-surface);
+  border: 1px solid var(--rc-line);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  display: flex; flex-direction: column; gap: 6px;
+  min-height: 110px;
+}
+.src-card:hover { border-color: var(--rc-line-strong); }
+.src-card.selected {
+  border-color: var(--rc-accent);
+  box-shadow: 0 0 0 2px var(--rc-accent-soft);
+}
+.src-card .ic {
+  width: 32px; height: 32px; border-radius: 7px;
+  background: var(--rc-surface-2);
+  display: grid; place-items: center;
+  color: var(--rc-fg-3);
+  font-size: 15px;
+  transition: background .15s, color .15s;
+}
+.src-card.selected .ic { background: var(--rc-accent-soft); color: var(--rc-accent); }
+.src-card strong { font-size: 14px; font-weight: 600; color: var(--rc-fg); }
+.src-card span   { font-size: 12px; color: var(--rc-fg-3); line-height: 1.4; }
+
+/* ── Drop zone ──────────────────────────────────────────────────────────── */
+.rc-drop {
+  border: 2px dashed var(--rc-line-strong);
+  border-radius: 8px;
+  padding: 28px 16px;
+  text-align: center;
+  background: var(--rc-surface);
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.rc-drop.over, .rc-drop:hover { border-color: var(--rc-accent); background: var(--rc-accent-soft); }
+.rc-drop strong { font-size: 14px; font-weight: 600; }
+.rc-drop .sub   { font-size: 12px; color: var(--rc-fg-3); max-width: 52ch; }
+
+/* ── Pill badge ─────────────────────────────────────────────────────────── */
+.rc-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.rc-pill.n    { background: var(--rc-surface-2); color: var(--rc-fg-2); }
+.rc-pill.ok   { background: var(--rc-ok-soft);   color: var(--rc-ok); }
+.rc-pill.warn { background: var(--rc-warn-soft);  color: var(--rc-warn); }
+.rc-pill.err  { background: var(--rc-err-soft);   color: var(--rc-err); }
+.rc-pill.info { background: var(--rc-info-soft);  color: var(--rc-info); }
+.rc-pill.acc  { background: var(--rc-accent-soft);color: var(--rc-accent); }
+
+/* ── DB mode card ───────────────────────────────────────────────────────── */
+.db-mode-card {
+  background: var(--rc-surface);
+  border: 1px solid var(--rc-line);
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.db-mode-card:hover { border-color: var(--rc-line-strong); }
+.db-mode-card.selected {
+  border-color: var(--rc-accent);
+  box-shadow: 0 0 0 2px var(--rc-accent-soft);
+}
+.db-mode-card .ic2 {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--rc-surface-2);
+  display: grid; place-items: center;
+  color: var(--rc-fg-3); font-size: 13px;
+  margin-bottom: 8px;
+}
+.db-mode-card.selected .ic2 { background: var(--rc-accent-soft); color: var(--rc-accent); }
+
+/* ── Wizard select (styled like original) ───────────────────────────────── */
+.wz-select {
+  background: var(--rc-surface);
+  border: 1px solid var(--rc-line-strong);
+  border-radius: var(--rc-radius);
+  padding: 7px 28px 7px 9px;
+  min-height: 36px;
+  width: 100%;
+  appearance: none;
+  color: var(--rc-fg);
+  font: 14px var(--font-body);
+  background-image: linear-gradient(45deg, transparent 50%, var(--rc-fg-3) 50%),
+                    linear-gradient(135deg, var(--rc-fg-3) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 15px, calc(100% - 9px) 15px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.wz-select:focus { outline: 2px solid var(--rc-accent); outline-offset: 2px; }
+
+/* ── Primary / secondary buttons ────────────────────────────────────────── */
+.rc-btn {
+  border: 1px solid var(--rc-line-strong);
+  background: var(--rc-surface);
+  border-radius: var(--rc-radius);
+  padding: 8px 14px; min-height: 36px;
+  font: 500 14px var(--font-body);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  color: var(--rc-fg); white-space: nowrap; transition: background .12s;
+}
+.rc-btn:hover { background: var(--rc-surface-2); }
+.rc-btn:disabled { opacity: .45; cursor: not-allowed; }
+.rc-btn.primary { background: var(--rc-accent); border-color: var(--rc-accent); color: var(--rc-accent-fg); }
+.rc-btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.rc-btn.sm { padding: 5px 10px; min-height: 30px; font-size: 12px; }
+.rc-btn.ghost { border-color: transparent; }
+
+/* ── Wizard field label ─────────────────────────────────────────────────── */
+.wz-field label { display: block; font-size: 12px; font-weight: 500; color: var(--rc-fg-2); margin-bottom: 4px; }
+
+/* ── KV grid ────────────────────────────────────────────────────────────── */
+.rc-kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 16px; font-size: 13px; }
+.rc-kv dt { color: var(--rc-fg-2); }
+.rc-kv dd { margin: 0; }
+
+/* ── Filechip ───────────────────────────────────────────────────────────── */
+.rc-filechip {
+  display: inline-flex; gap: 8px; align-items: center;
+  background: var(--rc-surface-2); border-radius: var(--rc-radius);
+  padding: 6px 10px; max-width: 100%; font-size: 13px;
+}
+.rc-filechip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Dashboard / batch table (preserve existing) ────────────────────────── */
+.batch-row-hover:hover { background-color: var(--rc-surface-2); }
+.font-mono { font-family: var(--font-mono); }
+
+/* ── Spin animation ─────────────────────────────────────────────────────── */
+@keyframes rc-spin { to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: rc-spin 2s linear infinite; }
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .wz-step-connector { transition: none; }
+  .src-card, .db-mode-card { transition: none; }
+}

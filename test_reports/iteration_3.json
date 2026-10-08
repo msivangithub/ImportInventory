@@ -1,0 +1,30 @@
+{
+  "summary": "Tested the bug fix for API status pill showing MongoDB DB name. All 5 test items pass. Backend /api/health returns correct MSSQL values. Frontend pill shows 'MSSQL · RC26MASTERDB'. Wizard loads with 9 steps. Sample file loads. Dashboard 'New Import' navigates to /import/new.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_3.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WizardPage.jsx correctly reads h.mssqlLive and h.mssqlDb (with fallback to h.dbNew) to show 'MSSQL · {mssqlDb}' when configured",
+    "/api/health now returns mssqlLive, mssqlDb, dbNew all pointing to MSSQL_DB (RC26MASTERDB) — MongoDB name never exposed",
+    "Minor: Playwright pill text check was a timing issue (health API async) — visual screenshot confirms correct pill text"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% — /api/health returns mssqlLive:true, dbNew:'RC26MASTERDB', mssqlDb:'RC26MASTERDB', mode:'live'",
+    "frontend": "100% — pill shows 'MSSQL · RC26MASTERDB', 9 steps present, sample file loads (18 rows), New Import → /import/new"
+  },
+  "test_credentials": "msnarayana@retailcliq.com / RetailCLIQ@2026",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix verified: pill now shows 'MSSQL · RC26MASTERDB' (green) instead of 'live · retailcliq_import'. Health endpoint verified. 9-step wizard (Source,Preview,Mapping,Suppliers,Masters,Validate,Confirm,Import,Result) loads at /import/new. Sample CSV loads 18 rows with Continue enabled.",
+  "rca_of_issue": "Root cause was: (1) /api/health previously returned dbNew=MongoDB DB name and mode='live'/'demo' without exposing mssqlLive/mssqlDb fields; (2) WizardPage pill read h.mode and h.dbNew which resolved to MongoDB 'retailcliq_import'. Fix: health endpoint now sets dbNew=MSSQL_DB only when sql_configured, adds explicit mssqlLive and mssqlDb fields; pill logic reads h.mssqlLive and h.mssqlDb."
+}
